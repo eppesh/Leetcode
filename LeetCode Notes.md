@@ -43,7 +43,9 @@ Follow-up: Can you come up with an algorithm that is less than O(n2) time comple
 
 解法一：
 
-暴力方法：两层循环，一个从前往后，一个由后到前，进行遍历；直到两数和为`target`。
+暴力方法：两层循环，一个从前往后，一个由后到前，进行遍历；直到两数和为`target`。  
+时间复杂度：O(n^2);  
+空间复杂度：O(1);   
 
 ```c++
 vector<int> twoSum(vector<int> &nums, int target) 
@@ -62,7 +64,9 @@ vector<int> twoSum(vector<int> &nums, int target)
 }
 ```
 解法二：
-哈希表思想：利用`map`，`key`为`nums`中的值，`value`为该值在`nums`中的下标；如果`map`中`target-X`已经存在，则返回。为了减少循环的次数，可以循环时分别从前后两端同时开始遍历并查找。
+哈希表思想：利用`map`，`key`为`nums`中的值，`value`为该值在`nums`中的下标；如果`map`中`target-X`已经存在，则返回。为了减少循环的次数，可以循环时分别从前后两端同时开始遍历并查找。  
+时间复杂度：共有`n`个元素时，对每一个元素`x`，都可以在O(1)情况下寻找到`target-x`，故：O(n);   
+空间复杂度：O(n); 
 ```c++
 vector<int> twoSum(vector<int> &nums, int target)
 {
