@@ -215,3 +215,89 @@ public:
 - 链表的`next`指针指向及相应赋值；
   > tail->next = temp;  
   > tail = temp;        // or tail = tail->next;
+## 1.3 Longest Substring
+
+Tags: 滑动窗口; 最长子串;
+
+来源：[Leetcode-Longest Substring Without Repeating Characters](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters); 
+
+### 1.3.1 题目描述
+
+Given a string `s`, find the length of the longest substring without repeating characters. 
+
+Example 1:
+
+```
+Input: s = "abcabcbb"
+Output: 3
+Explanation: The answer is "abc", with the length of 3.
+```
+
+Example 2:
+
+```
+Input: s = "bbbbb"
+Output: 1
+Explanation: The answer is "b", with the length of 1.
+```
+
+Example 3:
+
+```
+Input: s = "pwwkew"
+Output: 3
+Explanation: The answer is "wke", with the length of 3.
+Notice that the answer must be a substring, "pwke" is a subsequence and not a substring.
+```
+
+
+Constraints:
+
+- 0 <= s.length <= 5 * 104
+- s consists of English letters, digits, symbols and spaces.
+
+### 1.3.2 解法
+
+思路：利用**滑动窗口**。滑动窗口，就是一个先进先出的队列。如例题中的`pwwkew`，刚开始该队列（窗口）为`p`（可理解为由右向左的方向入队列），不满足要求（不是最长）；再进一个元素，队列变为`pw`; 当下一个元素进来时，变为`pww`，不满足要求（有重复），此时需要移动该队列。
+
+**如何移动？只需要把队列头部（左边）的元素移出即可**，直到满足题目要求。
+
+一直维持这样的队列：移动后，队列变为`ww`，依旧有重复，继续移动，队列变为`w`，不再有重复元素；继续将下一个元素放入队列，队列变为`wk`，不是最长的；继续放进下一个元素，队列变为`wke`，已是最长的；当继续放进下一个元素时，队列变为`wkew`，有重复元素，开始移动队列，变为`kew`；所有元素已遍历完，求出解。
+
+```c++
+int lengthOfLongestSubstring(string s) 
+{
+    if (s.empty())
+    {
+        return 0;
+    }
+    unordered_set<char> tool;
+    int length = 0;
+    int right = 0;
+    for (int left = 0; left < s.size(); ++left)
+    {
+        if (left != 0)
+        {
+            tool.erase(s[left - 1]);
+        }
+        while (right < s.size() && tool.find(s[right]) == tool.end())
+        {
+            tool.insert(s[right]);
+            ++right;
+        }
+        length = max(length, right - left);
+    }
+    return length;
+}
+```
+
+### 1.3.3 知识点
+
+- `unordered_set` 和 `unordered_multiset` 都位于`#include <unordered_set>`头文件中；
+- `set`默认是有序列且unique的；若想无序，选用`unordered_set`；若想不唯一，选`multiset`；
+- `set.erase()`用法注意：
+  - 可以用`set.erase(iterator)`或`set.erase(myset[0])`来删除具体某个值；
+  - 用`set.erase(first,last)`时，注意删除的范围是**[first,last)**，后面是**开区间**；
+
+- **滑动窗口**：即一个（从右向左进入的）队列；满足相应条件，则进入队列；否则从队列头部移出元素，直到满足条件。
+
