@@ -730,3 +730,244 @@ double median = (data[left] + data[right])/2.0;
 如果`m`是偶数，则中位数取值为中间的两个数（左边的是left，右边的是right）的均值；
 
 如果`n`是奇数，则`left`和`right`是同一个数，即为中位数。
+
+## 1.5 Longest Palindromic Substring
+
+Tags: 动态规划;
+
+来源：[LeetCode-Longest Palindromic Substring](https://leetcode-cn.com/problems/longest-palindromic-substring); 
+
+### 1.5.1 题目描述
+
+Given a string `s`, return the longest palindromic substring in `s`.
+
+ Example 1:
+
+```c++
+Input: s = "babad"
+Output: "bab"
+Explanation: "aba" is also a valid answer.
+```
+
+Example 2:
+
+```
+Input: s = "cbbd"
+Output: "bb"
+```
+
+
+Constraints:
+
+- 1 <= s.length <= 1000
+
+- s consist of only digits and English letters.
+
+### 1.5.2 解法
+
+#### 1.5.2.1 动态规划法
+
+三个步骤：
+
+- Step 1: 定义数组元素的**含义**；
+
+  本题问的是：找到`string s`的最长回文子串；
+
+  `dp[i][j]`定义为：**`s`中第`i`个字符和第`j`个字符组成的子串`s[i..j]`是否是回文串**，`dp[i][j]=1`表示是，`dp[i][j]=0`表示不是。
+
+  那么在所有`dp[i][j]=1`的`(i,j)`中，长度（`j-i+1`）最长的就是答案。
+
+- Step 2: 找出数组元素之间的**关系式**；
+
+  如果`s[i...j]`是回文串，那么去掉两端的两个字符后`s[i+1 ... j-1]`肯定也是回文串，即若`dp[i][j] = 1`，则有`dp[i+1][j-1] = 1`；反过来讲，如果`s[(i+1) ... (j-1)]`是回文串，并且分别向外扩展一个字符时`s[i] = s[j]`，那么`s[i ... j]`也是回文串。
+
+  则有：
+
+  `dp[i][j] = dp[i+1][j-1] && s[i]==s[j]`; 
+
+- Step 3: 找出**初始值**；
+
+  边界条件即只有1个字符和只有2个字符的情况，当只有1个字符时，肯定是回文串；当只有2个字符时，如果两个字符相同也是回文串，否则不是回文串。则有：
+
+  `dp[i][i] = 1`;
+
+  `dp[i][i+1] = (s[i] == s[i+1])`;
+
+  从递推公式可知，需要先知道了`i+1`才会知道`i`，因此遍历时需要倒着遍历。
+
+  > 对于二维数组，由于只有对角线和对角线的右侧一位有初始值，而动态规划的思想就是要利用历史数据来避免重复计算，因此在实现过程中进行循环时外层循环可采用倒序进行遍历。如果外层循环用正序，`i = {0,1,2,3,4}`，当取`[0][4]`时，需要先求`[1][3]`的值，而此时还没有循环到`[1][3]`，没有计算出它的值，那么就会出错。
+
+时间复杂度：O(n^2);
+
+空间复杂度：O(n^2);
+
+参考代码：
+
+> 该代码只是利用动态规划方法的一种较易理解的写法，还可以优化。
+
+```c++
+string longestPalindrome(string s)
+{
+    int m = s.size();
+    if (m == 1)
+    {
+        return s;
+    }
+
+    // dp[i][j]表示:字符串s的第i个字符到第j个字符组成的子串s[i...j]是不是回文串,是为1,不是为0
+    vector<vector<int>> dp(m + 1, vector<int>(m + 1, -1));
+
+    // 初始化
+    // 1个字符时肯定是回文串,即dp[i][i]=1;2个字符时,若两字符相同才是回文串
+    for (int i = 1; i < m + 1; ++i)
+    {
+        dp[i][i] = 1;
+        if (i < m)
+        {
+            dp[i][i + 1] = (s[i - 1] == s[i]) ? 1 : 0;
+        }
+    }
+
+    // 迭代求解
+    int max_length = 1;     // s非空时回文子串长度至少为1
+    int begin_index = 0;    // 回文子串的起始位置下标
+    for (int i = m - 1; i >= 1; --i)
+    {
+        for (int j = i + 1; j < m + 1; ++j)
+        {
+            // 在上面初始化中已赋值过的不再计算
+            if (dp[i][j] == -1)
+            {
+                int temp = (s[i - 1] == s[j - 1]) ? 1 : 0;
+                dp[i][j] = dp[i + 1][j - 1] * temp;
+            }
+
+            // 若s[i...j]是回文串,且该串长度更长,则更新
+            if (dp[i][j] == 1 && (j - i + 1) > max_length)
+            {
+                max_length = j - i + 1;
+                begin_index = i - 1;
+            }
+        }
+    }
+    return s.substr(begin_index, max_length);
+}
+```
+
+#### 1.5.2.2 中心扩展法
+
+回文串一定是对称的，其对称中心可以是1个字符，也可以是2个字符。可以枚举所有的对称中心，并进行左右扩展，扩展时判断左右字符是否相同即可。
+
+时间复杂度：O(n^2);
+
+空间复杂度：O(1);
+
+参考代码：
+
+```c++
+// 扩展中心算法
+// 已知字符串s,left和right是s上的两个下标位置;以left和right所组成的子串为中心不断向外扩展得到最长回文串
+// 返回该最长回文串的开始与结束下标
+pair<int, int> ExpandAroundCenter(const string &s, int left, int right)
+{
+    int begin = 0;  // 得到的最长回文串的开始与结束下标
+    int end = 0;
+    while (left >= 0 && right < s.size() && s[left] == s[right])
+    {
+        // 继续从中心向外扩
+        --left;
+        ++right;
+    }
+    // 只要向外扩过,则回退一步(left+1,right-1)后就是回文串的起止下标
+    // 若未曾外扩过,则只有s[i]!=s[i+1],如"ab"这种情况,那么回退一步(left+1,right-1)后从(i,i+1)变成了(i+1,i)
+    // 这种情况认为回文子串只有1个字符,统一取下标i对应的字符,如"ab"返回a
+    begin = left + 1;
+    end = right - 1;
+    if (begin > end)
+    {
+        begin = end;
+    }
+    return { begin,end };
+}
+
+string longestPalindrome(string s)
+{
+    int m = s.size();
+    if (m == 1)
+    {
+        return s;
+    }
+
+    // 所求的最长回文串的起始下标与结束下标
+    int begin = 0;
+    int end = 0;
+
+    for (int i = 0; i < m; ++i)
+    {
+        auto palindrome1 = ExpandAroundCenter(s, i, i);             // 寻找以一个字符为中心的最长回文串
+        auto palindrome2 = ExpandAroundCenter(s, i, i + 1);         // 寻找以两个字符为中心的最长回文串
+
+        int length1 = palindrome1.second - palindrome1.first + 1;   // 以一个字符为中心找到的最长回文串的长度
+        int length2 = palindrome2.second - palindrome2.first + 1;   // 以两个字符为中心找到的最长回文串的长度
+        int length = end - begin + 1;                               // 所求的最长回文串的长度
+
+        // 若有更长的回文串,则更新
+        if (length1 > length)
+        {
+            length = length1;
+            begin = palindrome1.first;
+            end = palindrome1.second;
+        }
+        if (length2 > length)
+        {
+            length = length2;
+            begin = palindrome2.first;
+            end = palindrome2.second;
+        }
+    }
+
+    return s.substr(begin, end - begin + 1);
+}
+```
+
+#### 1.4.2.3 Manacher算法
+
+参考：[Manacher's Algorithm](https://leetcode-cn.com/problems/longest-palindromic-substring/solution/xiang-xi-tong-su-de-si-lu-fen-xi-duo-jie-fa-bao-gu/); 
+
+时间复杂度：O(n);
+
+空间复杂度：O(n); 
+
+### 1.5.3 知识点
+
+#### 1.5.3.1 动态规划
+
+动态规划一些特点：
+
+- 通过**避免重复节点的计算**来提升效率；（利用**历史记录**来避免重复计算）
+- 使用了**字典/哈希表**来保存计算的中间结果；（可用**一维或二维数组**来保存）
+- 用**空间**换**时间**；
+
+详细说明参考另一篇单独的笔记《动态规划笔记》。
+
+#### 1.5.3.2 拓扑排序
+
+参考：[知乎-算法学习笔记(53):拓扑排序](https://zhuanlan.zhihu.com/p/260112913); 
+
+**拓扑排序**是对`DAG(有向无环图)`上的节点进行排序，使得对于每一条有向边`u->v`，`u`都在`v`之前出现。
+
+简单地说，是在不破坏节点**先后顺序**的前提下，把**DAG**拉成**一条链**。
+
+以游戏中的科技树（如忍3的天赋点，不是树而只是DAG）举例，拓扑排序就是找到一种**可能的**点科技树的**顺序**（按某种**顺序**去点亮天赋点，结果不唯一）。
+
+![忍3苍牙天赋点](https://img2.tapimg.com/bbcode/images/9e223d2a0012d60eab10641c3b722d11.png?imageView2/2/w/1320/h/9999/q/80/format/jpg/interlace/1/ignore-error/1)
+
+#### 1.5.3.3 其他知识点
+
+- std::string::substr
+
+  ```c++
+  string substr (size_t pos = 0, size_t len = npos) const;
+  ```
+
+  注意：参数1是起始位置的下标，参数2是子串的长度。
