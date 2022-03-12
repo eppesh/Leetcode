@@ -971,3 +971,250 @@ string longestPalindrome(string s)
   ```
 
   注意：参数1是起始位置的下标，参数2是子串的长度。
+
+## 1.6 Regular Expression Matching
+
+Tags: 
+
+来源：[LeetCode - Regular Expression Matching](https://leetcode-cn.com/problems/regular-expression-matching); 
+
+### 1.6.1 题目描述
+
+Given an input string `s` and a pattern `p`, implement regular expression matching with support for `.` and `*` where:
+
+- `.` Matches any single character.
+- `*` Matches zero or more of the preceding element.
+
+The matching should cover the **entire** input string (not partial). 
+
+Example 1:
+
+```c++
+Input: s = "aa", p = "a"
+Output: false
+Explanation: "a" does not match the entire string "aa".
+```
+
+Example 2:
+
+```c++
+Input: s = "aa", p = "a*"
+Output: true
+Explanation: '*' means zero or more of the preceding element, 'a'. Therefore, by repeating 'a' once, it becomes "aa".
+```
+
+Example 3:
+
+```c++
+Input: s = "ab", p = ".*"
+Output: true
+Explanation: ".*" means "zero or more (*) of any character (.)".
+```
+
+
+Constraints:
+
+- 1 <= s.length <= 20
+
+- 1 <= p.length <= 30
+
+- `s` contains only lowercase English letters.
+
+- `p` contains only lowercase English letters, `.`, and `*`.
+
+- It is guaranteed for each appearance of the character `*`, there will be a previous valid character to match.
+
+### 1.6.2 解法
+
+思路：动态规划；时间复杂度：O(mn); 空间复杂度：O(mn); (m,n是s和p的长度)
+
+三个步骤：
+
+- Step 1: 定义数组元素的**含义**；
+
+  本题问的是：判断字符串`s`和字符串`p`是否匹配；
+
+  `dp[i][j]`定义为：`s`的前`i`个字符是否跟`p`的前`j`个字符匹配，`dp[i][j]=true`表示匹配，`dp[i][j]=flase`表示不匹配。
+
+  那么`dp[m][n]`的就是答案（`m,n`分别是`s,p`的长度）。
+
+- Step 2: 找出数组元素之间的**关系式**；
+
+  思路如下：
+
+  1. `p` 的第`j`个字符是`*`：
+
+     1.1 `*`号前面那个字符`p(j - 1)`与`s`的第`i`个字符匹配；分3种情况：
+
+     - `*`前面的字符出现0次：`dp[i][j] = dp[i][j - 2]`;
+     - `*`前面的字符出现1次: `dp[i][j] = dp[i - 1][j - 2]`;
+     - `*`前面的字符出现2次或多次: `dp[i][j] = dp[i-1][j]`; 
+
+     即：`dp[i][j] = dp[i][j - 2] || dp[i - 1][j - 2] || dp[i - 1][j]`;
+
+     1.2 `*`号前面那个字符`p(j - 1)`与`s`的第`i`个字符不匹配；分3种情况：
+
+     - `*`前面的字符出现0次: `dp[i][j] = dp[i][j - 2]`;
+     - `*`前面的字符出现1次: `dp[i][j] = false`;
+     - `*`前面的字符出现2次或多次: `dp[i][j] = false`;
+
+     即：`dp[i][j] = dp[i][j - 2] || false || false = dp[i][j-2]`; 
+
+     整合1.1和1.2的信息有：
+
+     `dp[i][j] = dp[i][j - 2] || ( (dp[i - 1][j - 2] || dp[i - 1][j]) && p(j-1)匹配s(i) )`; 
+
+  2. `p` 的第`j`个字符不是`*`：
+
+     2.1 `p`的第`j`个字符跟`s`的第`i`个字符匹配: `dp[i][j] = dp[i-1][j-1]`;
+
+     2.2 `p`的第`j`个字符跟`s`的第`i`个字符不匹配: `dp[i][j] = false`;
+
+  即：`dp[i][j] = (dp[i-1][j-1] && p(j)匹配s(i)) || false = dp[i-1][j-1] && p(j)匹配s(i)`; 
+
+  > p(j)匹配s(i) 即：p的第j个字符跟s的第i个字符匹配，包括两字符相同或p的第j个字符是'.' ；
+
+  啰嗦伪代码解释见下文。
+
+- Step 3: 找出**初始值**；
+
+  根据题意,`*`前必须是有效字符,因此`p`第1个字符不会是`*`,且不会有两个`*`挨着出现。则有：
+
+  `dp[0][0] = 1`;
+
+  `dp[0][1] = 0`;
+
+  虽然字符串长度规定了不会为0，但迭代计算时因为会有`i-1`和`i-2`，因此要把`dp[0][i]`作为初始值先求出来。
+
+  如果`p`的第`i`个字符是`*`，则要看`p`的前`i-2`个字符是否匹配，即：
+
+  ```c++
+  for(int i=2; i<=n; ++i) // m和n实际不会为0,此处只是为了赋初值
+  {
+  	// 若p的第i个字符是*,则要看p的前i-2个字符是否匹配
+  	if(p[i-1] == '*')
+  	{
+  		dp[0][i] = dp[0][i-2];
+  	}
+  }
+  ```
+
+啰嗦伪代码解释：
+
+```c++
+先明确:字符匹配指的是p的第j个字符跟s的第i个字符相同,或者p的第j个字符是万能匹配符`.`;
+if (p的第j个字符是 * 号) 
+{
+    if (*号前面那个字符p(j - 1)与s的第i个字符匹配)
+    {
+        // 根据*前面的字符出现的次数,分三种情况:
+        // 1. 出现0次: 
+        s = "##abc", p = "###ac*";
+        p就变成了"###a",p消去了2位,则有: dp[i][j] = dp[i][j - 2];
+        
+        // 2. 出现1次: 
+        s = "##abc", p = "###ac*";
+        p就变成了"###ac", 由于s的第i个字符跟p的第j - 1个字符相同, 可以消去; 
+        此时s消去了1位, p消去了2位, 则有: dp[i][j] = dp[i - 1][j - 2];
+        
+        // 3. 出现2次或多次: 
+        s = "##abc", p = "###ac*";
+        p可以变成"###acc"或"###accc...", 当p末尾的字符c可以是多个时, 需要s往前去找是否也有多个跟s末尾字符c相同的字符相匹配,每找到一个,i往前移一位,即s消去1位,而p不消位,则有: dp[i][j] = dp[i-1][j];
+        
+        ///综合这三种情况有:
+        dp[i][j] = dp[i][j - 2] 或 dp[i - 1][j - 2] 或 dp[i - 1][j];
+    }
+    else// *号前面那个字符p(j-1)与s的第i个字符不匹配
+    {
+        // 根据*前面的字符出现的次数,分三种情况:
+        // 1. 出现0次: 
+        s = "##abc", p = "###ad*";
+        p就变成了"###a", p消去了2位, 则有: dp[i][j] = dp[i][j - 2];
+        
+        // 2. 出现1次: 
+        s = "##abc", p = "###ad*";
+        p就变成了"###ad", 由于s的第i个字符跟p的第j - 1个字符不相同, 则有: dp[i][j] = false;
+        
+        // 3. 出现2次或多次: 
+        s = "##abc", p = "###ad*";
+        p可以变成"###add"或"###addd...", 由于s的第i个字符跟p的第j - 1个字符不相同, 则有: dp[i][j] = false; 
+        
+        ///综合这三种情况有:
+        dp[i][j] = dp[i][j - 2] 或 false 或 false;
+    }
+    
+    // 用整洁的方式表示上面的情况:
+    情况1. *号前面那个字符p(j - 1)与s的第i个字符匹配时: dp[i][j] = dp[i][j - 2] 或 dp[i - 1][j - 2] 或 dp[i - 1][j];
+    情况2. *号前面那个字符p(j - 1)与s的第i个字符不匹配时: dp[i][j] = dp[i][j - 2] 或 false 或 false;
+    
+    令A表示情况1和情况2里的公共部分dp[i][j] = dp[i][j - 2]，把它提取出来；且dp[i][j]默认为false,因此false情况也可以不考虑。
+    令B表示情况1里除去公共部分的结果:*号前面那个字符p(j - 1)与s的第i个字符匹配时: dp[i][j] = dp[i - 1][j - 2] 或 dp[i - 1][j];
+    则变成：
+    dp[i][j] =  情况1 或 情况2 = A 或 B；
+}
+else // p的第j个字符不是 * 号
+{
+    if(p的第j个字符跟s的第i个字符匹配)
+    {
+        s = "##abc", p = "##ac"; 
+        s和p可以各消去1位,则有: dp[i][j] = dp[i-1][j-1];
+    }
+    else // p的第j个字符跟s的第i个字符不匹配
+    {
+        s = "##abc", p = "##ad";
+        则有: dp[i][j] = false;
+    }
+    由于dp[i][j]默认为false,false情况可以不考虑；上面的情况可以简洁地写成：
+    dp[i][j] = dp[i-1][j-1];
+}
+```
+
+参考代码：
+
+```c++
+// *代表前面的字符可以出现0次,1次或多次;如:ab*可匹配a,ab,abb,abbb..b
+// 约定:s(i)表示s的第i个字符,即s[i-1](下标为i-1);p(j)同理;    
+bool isMatch(string s, string p)
+{
+    int m = s.size();
+    int n = p.size();
+
+    // dp[i][j]:s的前i个字符是否跟p的前j个字符匹配
+    vector<vector<bool>> dp(m + 1, vector<bool>(n + 1, false));
+
+    // 初始值设置
+    // 根据题意,*前必须是有效字符,因此p第1个字符不会是*,且不会有两个*挨着出现
+    dp[0][0] = 1;
+    dp[0][1] = 0;
+    for (int i = 2; i <= n; ++i) // m和n实际不会为0,此处只是为了赋初值
+    {
+        // 若p的第i个字符是*,则要看p的前i-2个字符是否匹配
+        if (p[i - 1] == '*')
+        {
+            dp[0][i] = dp[0][i - 2];
+        }
+    }
+
+    // 迭代求解
+    for (int i = 1; i <= m; ++i)
+    {
+        for (int j = 1; j <= n; ++j)
+        {
+            if (p[j - 1] == '*')
+            {
+                dp[i][j] = dp[i][j-2] || ( (p[j-1-1]==s[i-1] || p[j-1-1]=='.') && (dp[i-1][j] || dp[i-1][j-2]) );
+            }
+            else
+            {
+                dp[i][j] = dp[i-1][j-1] && (s[i-1] == p[j-1] || p[j-1] == '.');
+            }
+        }
+    }
+
+    return dp[m][n];
+}
+```
+
+### 1.6.3 知识点
+
+- 正则表达式中的`*`: `*`代表前面的字符可以出现0次,1次或多次;如:`ab*`可匹配`a,ab,abb,abbb..b`;
