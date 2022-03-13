@@ -1218,3 +1218,104 @@ bool isMatch(string s, string p)
 ### 1.6.3 知识点
 
 - 正则表达式中的`*`: `*`代表前面的字符可以出现0次,1次或多次;如:`ab*`可匹配`a,ab,abb,abbb..b`;
+
+## 1.7 Container With Most Water
+
+Tags: 双指针；
+
+来源：[LeetCode - Container With Most Water](https://leetcode-cn.com/problems/container-with-most-water); 
+
+### 1.7.1 题目描述
+
+You are given an integer array `height` of length `n`. There are `n` vertical lines drawn such that the two endpoints of the `i th` line are `(i, 0)` and `(i, height[i])`.
+
+Find two lines that together with the x-axis form a container, such that the container contains the most water.
+
+Return the maximum amount of water a container can store.
+
+**Notice** that you may not slant the container.
+
+Example 1:
+
+<img src="https://s3-lc-upload.s3.amazonaws.com/uploads/2018/07/17/question_11.jpg" alt="pic" style="zoom: 80%;" />
+
+```c++
+Input: height = [1,8,6,2,5,4,8,3,7]
+Output: 49
+Explanation: The above vertical lines are represented by array [1,8,6,2,5,4,8,3,7]. In this case, the max area of water (blue section) the container can contain is 49.
+```
+
+Example 2:
+
+```c++
+Input: height = [1,1]
+Output: 1
+```
+
+
+Constraints:
+
+- n == height.length
+
+- 2 <= n <= 10^5
+
+- 0 <= height[i] <= 10^4
+
+
+
+### 1.7.2 解法
+
+思路：头尾双指针法；
+
+二维平面上，所求的最大容量，即：面积S = 高度h * 宽度w；假定两指针分别为`i,j`，所对应的水槽的高度分别为`h[i]`和`h[j]`，此时水槽面积为`S(i,j)`；类似木桶理论，这里可容纳水的高度由**短板**决定，因此面积为：
+
+`S = min(h[i],h[j]) * (j-i)`；
+
+每次计算结束移动指针时，要移动哪个指针呢？
+
+可知，无论移动哪个，**宽度**都会减少，而**高度** = `min(h[i],h[j])`，有两种情况：
+
+- 若向内**移动长板**，水槽的短板 `min(h[i],h[j])`只会变小或不变，此时面积 **一定变小**；
+- 若向内**移动短板**，水槽的短板`min(h[i],h[j])`**可能会变大**，也可能变小或不变，此时面积**可能变大**；
+
+显然，移动长板时面积是一定变小的，此题是为了求**最大**容水量，因此移动指针时，是**向内移动短板**；
+
+时间复杂度：O(n); n是数组长度；
+
+空间复杂度：O(1); 
+
+> 另一种方法是暴力两层循环法，时间复杂度O(n^2)太高了，不可取；
+
+参考代码：
+
+```c++
+int maxArea(vector<int>& height) 
+{
+    int n = height.size();
+    int length = 0; // 容器的长
+    int width = 0;  // 容器的宽
+    int area = 0;   // 容器的面积
+    int i=0;        // 左指针
+    int j=n-1;      // 右指针
+    while(i<j)
+    {
+        length = j-i;            
+        width = min(height[i],height[j]);
+        area = max(area,length*width);
+        // 每次移动高度小的指针
+        if(height[i]<height[j])
+        {
+            ++i;
+        }
+        else
+        {
+            --j;
+        }
+    }
+    return area;
+}
+```
+
+### 1.7.3 知识点
+
+- 双指针的思路在具体实现时也要考虑效率；如两层循环也是双指针的思路，但更像是穷举遍历所有情况。
