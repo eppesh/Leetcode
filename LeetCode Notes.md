@@ -1576,4 +1576,139 @@ output: 1,4,7,10,2,5,8,11,3,6,9,12
 
   **修改**的方法：将最后一个节点的`next`置为空（`last_node->next = nullptr;`)
 
-  
+## 2.2 Reverse Linked List
+
+Tags: Linked List; 
+
+来源：[Leetcode - Reverse Linked List](https://leetcode-cn.com/problems/reverse-linked-list/); 
+
+### 2.2.1 题目描述
+
+Given the `head` of a singly linked list, reverse the list, and return the reversed list.
+
+ Example 1:
+
+![pic](https://assets.leetcode.com/uploads/2021/02/19/rev1ex1.jpg)
+
+```c++
+Input: head = [1,2,3,4,5]
+Output: [5,4,3,2,1]
+```
+
+Example 2:
+
+![pic](https://assets.leetcode.com/uploads/2021/02/19/rev1ex2.jpg)
+
+```c++
+Input: head = [1,2]
+Output: [2,1]
+```
+
+Example 3:
+
+```c++
+Input: head = []
+Output: []
+```
+
+
+Constraints:
+
+- The number of nodes in the list is the range [0, 5000].
+- -5000 <= Node.val <= 5000
+
+### 2.2.2 解法
+
+#### 2.2.2.1 栈
+
+利用栈的后进先出性质将单链表反转过来。
+
+时间复杂度：O(n);
+
+空间复杂度：O(n);
+
+示例：
+
+```c++
+ListNode *reverseList(ListNode *head)
+{
+    if (head == nullptr)
+    {
+        return head;
+    }
+    std::stack<ListNode *> tools;
+    ListNode *input = head;
+    // 先遍历整个链表并入栈
+    while (input != nullptr)
+    {
+        tools.push(input);
+        input = input->next;
+    }
+    // 出栈并构建新链表
+    ListNode *output = nullptr;
+    ListNode *tail = nullptr;
+    while (!tools.empty())
+    {
+        auto cur_node = tools.top();
+        if (output == nullptr)
+        {
+            output = cur_node;
+        }
+        else
+        {
+            tail->next = cur_node;
+        }
+        tail = cur_node;
+        tools.pop();
+    }
+    if (tail != nullptr)
+    {
+        tail->next = nullptr;
+    }
+    return output;
+}
+```
+
+#### 2.2.2.2 原地翻转
+
+利用3个指针，分别表示当前节点、当前节点的前驱节点和当前节点的后置节点；
+
+- 遍历整个链表；
+  - 先保存好后置节点；
+  - 再把当前节点的`next`指向前驱节点；
+  - 前驱节点和当前节点依次前进一步，准备下一次循环。
+
+- 循环结束前驱节点就是反转后的头节点。
+
+时间复杂度：O(n);
+
+空间复杂度：O(1);
+
+示例：
+
+```c++
+ListNode *reverseList(ListNode *head)
+{
+    if (head == nullptr)
+    {
+        return head;
+    }
+
+    ListNode *pre = nullptr;    // 当前节点的前驱节点
+    ListNode *cur = head;       // 当前节点
+    ListNode *post = nullptr;   // 当前节点的后置节点
+
+    while (cur != nullptr)
+    {
+        // 先保存后置节点
+        post = cur->next;
+        // 把前驱节点设置为next
+        cur->next = pre;
+        // 前驱和当前节点依次后移,准备下一次循环
+        pre = cur;
+        cur = post;
+    }
+    return pre;
+}
+```
+
