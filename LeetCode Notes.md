@@ -1319,3 +1319,261 @@ int maxArea(vector<int>& height)
 ### 1.7.3 知识点
 
 - 双指针的思路在具体实现时也要考虑效率；如两层循环也是双指针的思路，但更像是穷举遍历所有情况。
+
+# 2. Linked List
+
+其他题目。
+
+## 2.1 Transpose Linked List
+
+Tags: Single Linked List, Transpose;
+
+来源：阿里面试题；
+
+### 2.1.1 题目描述
+
+Given the `head` of a linked list (which is the representation of a matrix), return the **transpose** of this "matrix".
+
+给定一个单链表a，请返回单链表b（如下图所示）。
+
+![pic](https://github.com/eppesh/Pictures/blob/main/Transpose%20Linked%20List.png)
+
+```c++
+input: 1->2->3->4->5->6->7->8->9
+output: 1->4->7->2->5->8->3->6->9
+```
+
+### 2.1.2 解法
+
+#### 2.1.2.1 数组法（一维 or 二维）；
+
+不要局限在面试官强调的**单链表**上，因为涉及到链表的节点更换，乍一看可能没有好的思路。但数据结构的使用本来就是要考虑适配性，即总是尽量选择**合适**的数据结构来解决问题。该题中，要把“矩阵”变成它的转置，数组就是一种合适的数据结构。
+
+方法1：一维数组；
+
+```c++
+// 输出的代码删掉了
+int main()
+{
+    // 生成 rows * cols 的矩阵
+    int rows = 2;               // 行数
+    int cols = 3;               // 列数
+    std::vector<int> input(rows * cols);
+    for (int i = 0; i < rows * cols; ++i)
+    {
+        input[i] = i + 1;
+    }
+
+    // 生成转置矩阵
+    std::vector<int> output(rows * cols);
+    
+    // 双循环写法(更易理解)
+    int index = 0;
+    for (int j = 0; j < rows; ++j)
+    {
+        for (int i = 0; i < cols; ++i)
+        {
+            output[i * rows + j] = input[index++];
+        }
+    }
+    
+    // 单循环写法
+    /*
+    for(int i=0; i<rows * cols; ++i)
+    {
+        output[(i%cols) * rows + (i/cols)] = input[i];
+    }
+    */
+    return 0; 
+}
+```
+
+输出：
+
+```c++
+input: 1,2,3,4,5,6
+output:1,4,2,5,3,6
+```
+
+方法2：二维数组；
+
+```c++
+int main()
+{
+    // 生成 rows * cols 的矩阵
+    int rows = 2;               // 行数
+    int cols = 3;               // 列数
+    std::vector<std::vector<int>> input(rows, std::vector<int>(cols));
+    for (int j = 0; j < rows; ++j)
+    {
+        for (int i = 0; i < cols; ++i)
+        {
+            input[j][i] = j * rows + i + 1;
+        }
+    }
+
+    // 生成转置矩阵; 注意output的行数和列数正好跟input相反
+    std::vector<std::vector<int>> output(cols, std::vector<int>(rows));
+    int index = 0;
+    for (int j = 0; j < rows; ++j)
+    {
+        for (int i = 0; i < cols; ++i)
+        {
+            output[i][j] = input[j][i];	// 循环是按input先rows再cols遍历的
+        }
+    }
+
+    return 0; 
+```
+
+输出：
+
+```c++
+input: 1,2,3,3,4,5
+output:1,3,2,4,3,5
+```
+
+#### 2.1.2.2 链表法
+
+假如面试官要求输入和输出都必须是链表呢？还是可以借助数组来实现转置，然后再按要求把转置后的结果转换成链表形式。（有更好的方法后再补充）
+
+示例：（输出的相关代码未展示）
+
+```c++
+#include <vector>
+
+template <class T>
+class ListNode
+{
+public:
+    ListNode() :value_(0), next_(nullptr) {}
+    ListNode(T value) :value_(value), next_(nullptr) {}
+    ListNode(T value, ListNode<T> *next) : value_(value), next_(next) {}
+public:
+    T value_;
+    ListNode<T> *next_;
+};
+
+template <class T>
+ListNode<T> *TransposeList(ListNode<T> *input, int rows, int cols)
+{
+    // 异常判断暂时省去
+    // 利用一维数组先进行节点转置(但前后链接关系未变)
+    std::vector<ListNode<T> *> tools;
+    ListNode<T> *head = input;
+    while (head != nullptr)
+    {
+        tools.push_back(head);
+        head = head->next_;
+    }
+    std::vector<ListNode<T> *> out(rows * cols);
+    int index = 0;
+    for (int j = 0; j < rows; ++j)
+    {
+        for (int i = 0; i < cols; ++i)
+        {
+            out[i * rows + j] = tools[index++];
+        }
+    }
+    
+    // 类似新建链表的方式重新设置前后链接关系
+    ListNode<T> *result = nullptr;			// 输出链表的头指针
+    ListNode<T> *tail = nullptr;			// 输出链表的尾指针,在尾部依次添加节点,用于构建新的链接关系
+    for (auto it : out)
+    {
+        if (result == nullptr)
+        {
+            result = it;
+        }
+        else
+        {
+            tail->next_ = it;
+            // 注意：如果操作前最后一个节点的next_不为空,这里要加上`it->next_ = nullptr`来保证操作完最后一个节点的next_为空
+        }
+        tail = it;
+    }
+    return result;
+}
+
+int main()
+{
+    // 生成输入链表
+    ListNode<int> *head = nullptr;          // 链表头节点
+    ListNode<int> *tail = nullptr;          // 链表尾节点,用于在尾部插入新节点
+    ListNode<int> *new_node = nullptr;      // 待插入的新节点
+    int rows = 4;
+    int cols = 3;
+    for (int i = 0; i < rows * cols; ++i)
+    {
+        new_node = new ListNode<int>(i + 1);
+        if (head == nullptr)
+        {
+            head = new_node;
+        }
+        else
+        {
+            tail->next_ = new_node;
+        }
+        tail = new_node;
+    }
+
+    // 转置
+    ListNode<int> *output = TransposeList(head, rows, cols);
+    // 释放相应内存
+    return 0;
+}
+```
+
+输出：
+
+```c++
+input:  1,2,3,4,5,6,7,8,9,10,11,12
+output: 1,4,7,10,2,5,8,11,3,6,9,12
+```
+
+### 2.1.3 知识点
+
+- 链表的创建
+
+  ```c++
+  ListNode<int> *head = nullptr;          // 链表头节点
+  ListNode<int> *tail = nullptr;          // 链表尾节点,用于在尾部插入新节点
+  ListNode<int> *new_node = nullptr;      // 待插入的新节点
+  int length = 9;							// 链表长度
+  for (int i = 0; i < length; ++i)
+  {
+      new_node = new ListNode<int>(i + 1);
+  
+      if (head == nullptr)
+      {
+          head = new_node;
+      }
+      else
+      {
+          tail->next_ = new_node;
+      }
+      tail = new_node;
+  }
+  ```
+
+- 链表操作要避免出现环
+
+  参考：[](); 
+
+  例如：链表的反转；将`1,2,3`反转成`3,2,1`；
+
+  按照前面转置的思路（其他实现思路暂不在此讨论），利用一个**栈**，遍历链表每个节点并入栈，然后将栈内每个节点依次取出，取出的同时构建新的链表，就是所求。
+
+  很显然，这样操作完确实也能正常输出`3,2,1`，但按照上面“链表的创建”里的代码，最后节点`1`的`next_`其实非空，而是还指向节点`2`的地址；这样就形成了一个环：`3->2->1->2->1...`
+
+  ```c++
+       --<---
+       ↓    ↑
+  3 -> 2 -> 1
+  ```
+
+  在Visual Studio上编译运行都正常，但在Leetcode 的Online Judge上可能出现`Heap use after free`的报错。因为OJ在程序结束前会逐个节点进行delete，遇到最后一个节点`1`时，因为其`next`不为空，会delete其`next`，也就是节点`2`；但节点`2`在前面已经删除过了，因此就会报错。
+
+  **修改**的方法：将最后一个节点的`next`置为空（`last_node->next = nullptr;`)
+
+  
