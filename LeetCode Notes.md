@@ -1558,7 +1558,7 @@ output: 1,4,7,10,2,5,8,11,3,6,9,12
 
 - 链表操作要避免出现环
 
-  参考：[](); 
+  参考：["Heap use after free" error in LeetCode Online Judge but not Visual Studio](https://stackoverflow.com/questions/65463442/heap-use-after-free-error-in-leetcode-online-judge-but-not-visual-studio);  
 
   例如：链表的反转；将`1,2,3`反转成`3,2,1`；
 
