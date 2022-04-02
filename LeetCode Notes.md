@@ -1712,3 +1712,237 @@ ListNode *reverseList(ListNode *head)
 }
 ```
 
+# 3. Array
+
+## 3.1 Diagonal Traverse
+
+Tags: Matrix；
+
+来源：[Diagonal Traverse](https://leetcode-cn.com/problems/diagonal-traverse/): 
+
+### 3.1.1 题目描述
+
+Given an `m x n` matrix `mat`, return an array of all the elements of the array in a **diagonal order**.
+
+ ![pic](https://assets.leetcode.com/uploads/2021/04/10/diag1-grid.jpg)
+
+Example 1:
+
+```c++
+Input: mat = [[1,2,3],[4,5,6],[7,8,9]]
+Output: [1,2,4,7,5,3,6,8,9]
+```
+
+Example 2:
+
+```c++
+Input: mat = [[1,2],[3,4]]
+Output: [1,2,3,4]
+```
+
+
+Constraints:
+
+- m == mat.length
+- n == mat[i].length
+- 1 <= m, n <= 104
+- 1 <= m * n <= 104
+- -105 <= mat[i][j] <= 105
+
+### 3.1.2 解法
+
+思路：依次遍历每条对角线并取出上面的所有元素。
+
+在每条对角线上，遍历方向分为：**“右上”**和**“左下”**两种；且第**奇数**条对角线的方向是**右上**，第**偶数**条对角线的方向是**左下**。当超过边界时，则切换方向进入下一次循环。
+
+- 对于`m*n`的矩阵，总共有`m+n-1`条对角线，因此循环`m+n-1`次；
+  - 如果是**奇数**条对角线（处理的都是该对角线上的元素，包括界外和界内元素；下同）：
+    - 当前位置在界外时，则向**右上**移动一步，使之进入界内；（例如：遍历完数字6和8后，当前位置位于数字8的下方(本来是8的左下方，但出界后列数+1，因此到了8的下方)，跟9位于同一对角线上）
+    - 当前位置在界内时，则取出该元素并向**右上**移动一步；并重复该步骤，一直到当前位置出界为止；
+    - 当前位置行数+1，切换到下一条对角线上；
+  - 如果是**偶数**条对角线：
+    - 当前位置在界外时，则向**左下**移动一步，使之进入界内；（例如：遍历完数字7，5和3后，当前位置位于数字3的右方(本来是3的右上方，但出界后行数+1，因此到了3的右方)，跟6，8位于同一对角线上）
+    - 当前位置在界内时，则取出该元素并向**左下**移动一步；并重复该步骤，一直到当前位置出界为止；
+    - 当前位置列数+1，切换到下一条对角线上；
+- 返回取到的元素即可。
+
+示例代码：
+
+```c++
+vector<int> findDiagonalOrder(vector<vector<int>>& mat) 
+{
+    int m = mat.size();     // 行数
+    int n = mat[0].size();  // 列数
+    if(m*n==0)
+    {
+        return {};
+    }
+    vector<int> result;
+    // mat[i][j] 表示mat的第i行第j列的元素
+    int cur_row = 0;    // 当前行数
+    int cur_col = 0;    // 当前列数
+    
+    // 对角线总数为m+n-1，故循环这么多次,每次循环把当前对角线上的元素取出来
+    for(int i=0; i< (m+n-1); ++i)
+    {
+        int direction = i%2;    // 对角线方向;偶数表示为"右上",奇数表示"左下"
+        // 右上
+        if((direction & 1) == 0)  
+        {
+            if((cur_row<0||cur_row>m-1||cur_col<0||cur_col>n-1)                   // 当前位置越界
+            && (cur_row-1>=0&&cur_row-1<=m-1&&cur_col+1>=0&&cur_col+1<=n-1))      // 当前位置的右上方位置不越界(这个条件可以不要，因为右上方位置肯定在界内)
+            {
+                // 将右上方位置当作当前位置
+                cur_row = cur_row - 1;
+                cur_col = cur_col + 1;
+            }
+            // 只要当前位置不越界,就取出当前位置的值,并朝"右上"移动一步
+            while(cur_row>=0&&cur_row<=m-1&&cur_col>=0&&cur_col<=n-1)
+            {
+                result.push_back(mat[cur_row][cur_col]);
+                // 将右上方位置当作当前位置
+                cur_row = cur_row - 1;
+                cur_col = cur_col + 1;
+            }
+            cur_row++;      // 越界后下移一行
+        }            
+        else    // 左下
+        {
+            if((cur_row<0||cur_row>m-1||cur_col<0||cur_col>n-1)                  // 当前位置越界
+            && (cur_row+1>=0&&cur_row+1<=m-1&&cur_col-1>=0&&cur_col-1<=n-1))      // 当前位置的左下方位置不越界(这个条件可以不要，因为左下方位置肯定在界内)
+            {
+                // 将左下方位置当作当前位置
+                cur_row = cur_row + 1;
+                cur_col = cur_col - 1;
+            }
+            // 只要当前位置不越界,就取出当前位置的值,并朝"左下"移动一步
+            while(cur_row>=0&&cur_row<=m-1&&cur_col>=0&&cur_col<=n-1)
+            {
+                result.push_back(mat[cur_row][cur_col]);
+                // 将左下方位置当作当前位置
+                cur_row = cur_row + 1;
+                cur_col = cur_col - 1;
+            }
+            cur_col++;      // 越界后右移一列
+        }
+    }
+    return result;
+}
+```
+
+### 3.1.3 知识点
+
+- 没头绪的问题可以先找规律，形成一个大概的思路，再一步步细化；
+
+## 3.2 
+
+# 4. Tree
+
+
+
+# 5. Database
+
+主要记录一些数据库相关的知识点，必要时可以把题目加进来。
+
+## 5.1 Combine Two Tables
+
+参考：[Combine Two Tables](https://leetcode-cn.com/problems/combine-two-tables/);  [SQL-多表如何查询](https://leetcode-cn.com/problems/combine-two-tables/solution/tu-jie-sqlmian-shi-ti-duo-biao-ru-he-cha-xun-by-ho/); 
+
+- 多表联结
+
+  涉及到多表查询，需要用到**联结**。多表的联结分以下几种类型：
+
+  - **left join**(左联结): 联结结果保留左表的全部数据；
+  - **right join**(右联结): 联结结果保留右表的全部数据；
+  - **inner join**(内联结): 取两表的公共数据；
+
+  联结条件用**on**；
+
+  示例：
+
+  ```sql
+  select A.firstName, A.lastName, B.city, B.state
+  from Person as A left join Address as B
+  on A.personId = B.personId
+  ;
+  ```
+
+  
+
+![pic](https://pic.leetcode-cn.com/ad3df1c4ecc7d2dbe85f92cdde8ec9a731fdd20dc4c5629ecb372b21de26c682-1.jpg)
+
+## 5.2 Second Highest Salary
+
+参考：[Second Highest Salary](https://leetcode-cn.com/problems/second-highest-salary/); [SQL-查找第N高的数据](https://leetcode-cn.com/problems/second-highest-salary/solution/tu-jie-sqlmian-shi-ti-ru-he-cha-zhao-di-ngao-de-sh/); [CSDN-SQL中limit与offset的区别](https://blog.csdn.net/cnwyt/article/details/81945663); 
+
+思路1：利用`max(列名)` 返回该列的最大值`m`，利用`distinct`去重，那么再找小于`m`的数据中的最大值就是第二高的数据。
+
+示例：
+
+```sql
+select max(distinct Salary) as SecondHighestSalary
+from Employee
+where salary < (select max(distinct Salary)
+                from Employee)
+                ;
+```
+
+思路2：利用`limit y`返回查询结果的前`y`条数据，利用`offset x`跳过`x`条数据，利用`ifnull(expression, value)`判空；
+
+- `limit y`: 读取`y`条数据；
+- `limit x,y`: 跳过`x`条数据，读取`y`条数据；
+- `limit y offset x`: 跳过`x`条数据，读取`y`条数据；
+- `ifnull(expression, value)`: 判断表达式`expression`是否为`null`，如果为`null`则返回`value`，如果不为`null`则返回`expression`的值；
+
+示例：
+
+```sql
+select ifnull(
+    (select distinct salary as SecondHighestSalary
+    from Employee 
+    order by salary desc
+    limit 1 offset 1)
+    ,null) as SecondHighestSalary
+;
+```
+
+同理，如果求第`n`高的值，需要跳过`n-1`个数据，可能会用到：`SET N := N-1`; 
+
+## 5.3 Rank Scores
+
+要求把成绩按从大到小排列，并给出排名（存在并列排名，即并列第1时，第3个成绩的排名是2）。
+
+参考：[Rank Scores](https://leetcode-cn.com/problems/rank-scores/); 
+
+思路1：分成两部分，第1部分得到从大到小排的成绩，第2部分得到排名，再组合起来。
+
+求排名时，可以把所有大于等于某一分数的所有结果进行去重后计数，就是该分数的排名。
+
+由于每个成绩都要计算一次`count`，因此效率并不高。
+
+示例：
+
+```sql
+select A.score as score,
+    (select count(distinct B.score) from Scores B where B.score >= A.score) as 'rank'
+from Scores A
+order by A.score desc;
+```
+
+- 别名不能是SQL中的关键字，可以用引号括起来；（如上面的`rank`当做别名时要用加上引号，否则会报语法错误）
+
+思路2：利用排序函数`dense_rank()`;
+
+几个排名相关函数的区别：(都是搭配`over()`使用，`over()`里是待排名的列)
+
+- `row_number() over( order by 列名)`: 不考虑数据的重复性，按照查询出来的顺序依次标号；（如：按成绩排序时，三个100分，则排名也是`1,2,3`；
+- `rank() over( order by 列名)`: 对于数据重复的情况进行跳跃标号；（如：成绩分别是100，100，98；则排名是1，1，3；跳过了标号2）
+- `dense_rank() over( order by 列名)`: 连续标号；（如：成绩分别是100，100，98；则排名是1，1，2；）
+
+示例：
+
+```sql
+select score, dense_rank() over(order by score desc) as 'rank'
+from Scores
+```
+
