@@ -1320,6 +1320,854 @@ int maxArea(vector<int>& height)
 
 - 双指针的思路在具体实现时也要考虑效率；如两层循环也是双指针的思路，但更像是穷举遍历所有情况。
 
+## 1.8 3Sum
+
+Tags: 双指针；
+
+来源：[LeetCode - 3Sum](https://leetcode-cn.com/problems/3sum); 
+
+### 1.8.1 题目描述
+
+Given an integer array nums, return all the triplets [nums[i], nums[j], nums[k]] such that i != j, i != k, and j != k, and nums[i] + nums[j] + nums[k] == 0.
+
+Notice that the solution set must not contain duplicate triplets.
+
+ Example 1:
+
+```c++
+Input: nums = [-1,0,1,2,-1,-4]
+Output: [[-1,-1,2],[-1,0,1]]
+```
+
+Example 2:
+
+```c++
+Input: nums = []
+Output: []
+```
+
+Example 3:
+
+```c++
+Input: nums = [0]
+Output: []
+```
+
+
+Constraints:
+
+- 0 <= nums.length <= 3000
+- -10^5 <= nums[i] <= 10^5
+
+### 1.8.2 解法
+
+思路：排序+双指针；
+
+- 特殊情况判断：输入数组长度`n`小于3则返回{};
+- 对数组进行排序；
+- 遍历排序后的数组：
+  - 若`nums[i]>0`，直接返回当前结果；（因为已排好序，后面的3个数相加肯定不等于0）
+  - 若存在重复元素（`nums[i]==nums[i-1]`），则跳过该次循环，避免出现重复解（如`nums = {0,0,0,0,0,0}`的情况）；
+  - 令左指针`left=i+1`，右指针`right=n-1`，当`left<right`时，执行循环：
+    - 若`nums[i]+nums[left]+nums[right]==0`，保存当前结果；并判断`left`和`right`是否和下一位置的元素重复，并去除重复解；最后`left`和`right`同时向内移动一个位置；
+    - 若3数和小于0，说明`nums[left]`小了，需要`left`右移；
+    - 若3数和大于0，说明`nums[right]`大了，需要`right`左移。
+
+时间复杂度：O(n^2); 排序O(nlogn)，遍历数组O(n)与双指针遍历O(n)同时进行是O(n^2)，最后取最高阶的O(n^2); 
+
+空间复杂度：O(1); 
+
+参考代码：
+
+```c++
+vector<vector<int>> threeSum(vector<int>& nums) 
+{
+    if(nums.size() < 3)
+    {
+        return {};
+    }
+    vector<vector<int>> result;
+    // 将数组从小到大排序
+    sort(nums.begin(),nums.end());
+    vector<int> repeat(nums.size(),0);  // 用以去重的辅助数组
+    int left = 0;
+    int right = 0;
+    for(int i=0; i<nums.size(); ++i)
+    {
+        if(nums[i]>0)   // 3个都是大于0的数,和不可能为0,直接返回已有结果
+        {
+            return result;
+        }
+        // 重复值跳过，避免出现重复解 (如:全是0的数组)
+        if(i>0 && nums[i] == nums[i-1])
+        {
+            continue;
+        }
+        left = i+1;
+        right = nums.size()-1;
+        while(left < right)
+        {
+            // 判断
+            if(nums[i] + nums[left] + nums[right] == 0)
+            {
+                result.push_back({nums[i],nums[left],nums[right]});
+                // 重复值跳过，避免出现重复解
+                while(left<right && nums[left]==nums[left+1])
+                {
+                    left++;
+                }
+                while(left<right && nums[right]==nums[right-1])
+                {
+                    right--;
+                }
+                left++;
+                right--;
+            }
+            else if(nums[i] + nums[left] + nums[right] < 0) // 当前和小了,应该向右移动找较大的数
+            {
+                left++;
+            }
+            else    // 当前和大了,应该向左移动找较小的数
+            {
+                right--;
+            }
+        }
+    }
+    return result;
+}
+```
+
+### 1.8.3 知识点
+
+- 求解时考虑特殊情况作为测试用例，如`nums={0,0,0,0,0,0}`; 
+
+## 1.9 Letter Combinations of a Phone Number
+
+Tags: 回溯；DFS；
+
+来源：[LeetCode - Letter Combinations of a Phone Number](https://leetcode-cn.com/problems/letter-combinations-of-a-phone-number); 
+
+### 1.9.1 题目描述
+
+Given a string containing digits from `2-9` inclusive, return all possible letter combinations that the number could represent. Return the answer in **any order**.
+
+A mapping of digit to letters (just like on the telephone buttons) is given below. Note that 1 does not map to any letters.
+
+![pic](https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Telephone-keypad2.svg/200px-Telephone-keypad2.svg.png)
+
+Example 1:
+
+```c++
+Input: digits = "23"
+Output: ["ad","ae","af","bd","be","bf","cd","ce","cf"]
+```
+
+Example 2:
+
+```c++
+Input: digits = ""
+Output: []
+```
+
+Example 3:
+
+```c++
+Input: digits = "2"
+Output: ["a","b","c"]
+```
+
+
+Constraints:
+
+- 0 <= digits.length <= 4
+- digits[i] is a digit in the range ['2', '9'].
+
+### 1.9.2 解法
+
+思路1：队列法；
+
+- 先将数字对应字符存入数组（用数组下标当做数字，数组的值是字符串）；
+- 遍历输入的每个数字：
+  - 对第1个数字，遍历其对应的各个字符，依次放入队列；
+  - 对后序的数字：
+    - 遍历当前队列，取出队首元素，并依次跟当前数字对应的字符逐个组合后**进入队列**；
+- 此时队列中的元素就是所求的组合；
+
+时间复杂度：`O(3^m*4^n)`，其中m是输入中对应3个字母的数字个数（包括数字 2、3、4、5、6、8），n 是输入中对应 4 个字母的数字个数（包括数字 7、9），m+n 是输入数字的总个数。当输入包含 m 个对应 3 个字母的数字和 n 个对应 4 个字母的数字时，不同的字母组合一共有3^m*4^n种，需要遍历每一种字母组合。
+
+空间复杂度：`O(3^m*4^n)`，一共要生成`3^m*4^n`个结果；
+
+参考代码：
+
+```c++
+vector<string> letterCombinations(string digits) 
+{
+    int n = digits.size();
+    if (n <= 0)
+    {
+        return {};
+    }
+    vector<string> nums = { " "," ","abc","def","ghi","jkl","mno","pqrs","tuv","wxyz" };
+    // 队列法:先将第1个数字的字符依次进队;将队列元素依次出队,并遍历下一个数字的字符,组合后再入队;
+    queue<string> res;
+    for (int i = 0; i < n; ++i)
+    {
+        int num = digits[i] - '0';
+        int length = nums[num].size();
+        if (i == 0)
+        {
+            // 遍历第1个数字
+            for (int j = 0; j < length; ++j)
+            {
+                res.push(string(1, nums[num][j]));
+            }
+        }
+        else
+        {
+            int res_len = res.size();
+            for (int j = 0; j < res_len; ++j)
+            {
+                auto tmp = res.front();
+                res.pop();
+                // 遍历其他数字
+                for (int k = 0; k < length; ++k)
+                {
+                    res.push(tmp + string(1,nums[num][k]));
+                }
+            }
+        }
+    }
+    vector<string> result;
+    while (!res.empty())
+    {
+        result.push_back(res.front());
+        res.pop();
+    }
+    return result;
+}
+```
+
+思路2：回溯法；
+
+类似深度优先搜索的思想；
+
+时间复杂度：`O(3^m*4^n)`; 
+
+空间复杂度：O(m+n); 
+
+参考代码：
+
+```c++
+vector<string> letterCombinations(string digits)
+{
+    if(digits.size()<=0)
+    {
+        return {};
+    }
+    vector<string> result;
+    vector<string> input = { " "," ","abc","def","ghi","jkl","mno","pqrs","tuv","wxyz" };
+    int index = 0;
+    string buffer = ""; // 临时变量存放中间结果
+    DFS(result,input,digits,index,buffer); 
+    return result;
+}
+// 利用Depth First Search(DFS)的思想进行回溯
+void DFS(vector<string> &result, vector<string> &input, string &digits, int index, string buffer)
+{
+    if(index == digits.size())
+    {
+        result.push_back(buffer);
+        return;
+    }
+    int num = digits[index]-'0';    // 当前数字
+    int length = input[num].size(); // 当前数字对应字符串的长度
+    for(int i=0; i<length; ++i)
+    {
+        buffer.push_back(input[num][i]);
+        DFS(result,input,digits,index+1,buffer);
+        buffer.pop_back();
+    } 
+}
+```
+
+### 1.9.3 知识点
+
+- 
+
+## 1.10 Remove Nth Node From End of List
+
+Tags: 链表；双指针
+
+来源：[LeetCode - Remove Nth Node From End of List](https://leetcode-cn.com/problems/remove-nth-node-from-end-of-list); 
+
+### 1.10.1 题目描述
+
+Given the `head` of a linked list, remove the `nth` node from the end of the list and return its head.
+
+ Example 1:
+
+![pic](https://assets.leetcode.com/uploads/2020/10/03/remove_ex1.jpg)
+
+```c++
+Input: head = [1,2,3,4,5], n = 2
+Output: [1,2,3,5]
+```
+
+Example 2:
+
+```c++
+Input: head = [1], n = 1
+Output: []
+```
+
+Example 3:
+
+```c++
+Input: head = [1,2], n = 1
+Output: [1]
+```
+
+
+Constraints:
+
+- The number of nodes in the list is sz.
+- 1 <= sz <= 30
+- 0 <= Node.val <= 100
+- 1 <= n <= sz
+
+```c++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+```
+
+### 1.10.2 解法
+
+思路1：暴力法；
+
+先遍历整个链表获得链表长度`size`，则正序的第`size-n+1`个节点即为待删除节点；循环到待删节点的前一个节点，进行删除操作即可。
+
+时间复杂度：O(n); 
+
+空间复杂度：O(1); 
+
+参考代码：
+
+```c++
+ListNode *removeNthFromEnd(ListNode *head, int n)
+{
+    int size = 0;
+    ListNode *current_node = head;
+    // 获取链表长度
+    while (current_node != nullptr)
+    {
+        ++size;
+        current_node = current_node->next;
+    }
+    current_node = head;
+    int index = size - n + 1;   // 正序数第index个节点要被删除
+    if (index == 1)          // 要删除节点是第1个节点
+    {
+        return current_node->next;
+    }
+    // 得到被删除节点的前驱节点,方便删除操作
+    for (int i = 1; i < index - 1; ++i)
+    {
+        current_node = current_node->next;
+    }
+    current_node->next = current_node->next->next;
+    return head;
+}
+```
+
+思路2：栈；
+
+先将所有节点入栈，再依次出栈，出去`n`个元素后，当前栈顶元素正好是待删除节点的前驱节点。
+
+时间复杂度：O(n); 
+
+空间复杂度：O(n); 
+
+参考代码：
+
+```c++
+ListNode* removeNthFromEnd(ListNode* head, int n) 
+{
+    ListNode *current_node = head;
+    stack<ListNode*> tool;
+    // 入栈
+    while(current_node!=nullptr)
+    {
+        tool.push(current_node);
+        current_node = current_node->next;
+    }
+    for(int i=0; i<n; ++i)
+    {
+        tool.pop();
+    }
+    if(tool.empty())          // 要删除节点是第1个节点
+    {
+        return head->next;
+    }
+    current_node = tool.top();  // 栈顶元素即为待删除节点的前驱节点
+    current_node->next = current_node->next->next;        
+    return head;
+}
+```
+
+思路3：双指针；
+
+时间复杂度：O(n); 
+
+空间复杂度：O(1); 
+
+参考代码：
+
+```c++
+ListNode* removeNthFromEnd(ListNode* head, int n) 
+{
+    ListNode *dummy = new ListNode(0,head);
+    ListNode *first = head;
+    ListNode *second = dummy;
+    for(int i=0; i<n; ++i)
+    {
+        first = first->next;
+    }
+    while(first)
+    {
+        first = first->next;
+        second = second->next;
+    }
+    second->next = second->next->next;
+    ListNode *res = dummy->next;
+    delete dummy;
+    return res;
+}
+```
+
+### 1.10.3 知识点
+
+- 哑节点（dummy node）
+
+  在对链表进行操作时，一种常用技巧是添加一个哑节点（dummy node），它的`next`指针指向链表的头节点。这样一来，就不需要对头节点进行特殊的判断了。记得释放内存。
+
+  ```c++
+  ListNode *dummy = new ListNode(0,head);
+  if(dummy == nullptr)
+  {
+  	return;
+  }
+  // do something
+  // 记得释放内存
+  if(dummy != nullptr)
+  {
+  	delete dummy;
+  	dummy = nullptr;
+  }
+  ```
+
+
+## 1.11 Valid Parentheses 
+
+Tags: 栈；哈希表；
+
+来源：[Valid Parentheses](https://leetcode-cn.com/problems/valid-parentheses); 
+
+### 1.11.1 题目描述
+
+Given a string `s` containing just the characters `'(', ')', '{', '}', '['` and `']'`, determine if the input string is valid.
+
+An input string is valid if:
+
+1. Open brackets must be closed by the same type of brackets.
+2. Open brackets must be closed in the correct order.
+
+
+Example 1:
+
+```c++
+Input: s = "()"
+Output: true
+```
+
+Example 2:
+
+```c++
+Input: s = "()[]{}"
+Output: true
+```
+
+Example 3:
+
+```c++
+Input: s = "(]"
+Output: false
+```
+
+
+Constraints:
+
+- `1 <= s.length <= 10^4`
+- `s` consists of parentheses only `'()[]{}'`.
+
+### 1.11.2 解法
+
+思路：栈+哈希表；
+
+- s长度是奇数直接是false；
+
+- 用哈希表存储左右括号的对应关系（此处用右括号作为key，对应左括号作为value）；
+
+- 遍历s中各个字符ch：
+
+  - 如果ch不是右括号：
+
+    入栈；
+
+  - 如果ch是右括号：
+
+    - 栈空：return false;
+    - 栈非空，但栈顶元素不匹配：return false; （如果s有效，那它前面那个字符（即栈顶元素）必须是对应的左括号，因为中间匹配的已经pop掉了）；
+    - 栈非空，且栈顶元素匹配：pop; 
+
+时间复杂度：O(n); 
+
+空间复杂度：O(n); (或O(n+a))
+
+参考代码：
+
+```c++
+bool isValid(string s)
+{
+    int n = s.size();
+    if ((n & 1) == 1) // s长度为奇数
+    {
+        return false;
+    }
+    // 建立左右括号的对应关系,以右括号为key,对应左括号为value
+    map<char, char> dict = { {')','('},{']','['},{'}','{'} };
+    // 利用一个栈
+    stack<char> tools;
+    for (char ch : s)
+    {
+        // 是右括号时,要判断栈里是否有匹配的左括号
+        if (dict.find(ch) != dict.end())
+        {
+            if (tools.empty() || tools.top() != dict[ch])
+            {
+                return false;
+            }
+            else
+            {
+                tools.pop();
+            }
+        }
+        else    // 不是右括号时入栈
+        {
+            tools.push(ch);
+        }
+    }
+    return tools.empty();
+}
+```
+
+
+
+### 1.11.3 知识点
+
+- 有对应关系时可以考虑哈希表；
+
+## 1.12 Merge Two Sorted Lists
+
+Tags: 递归；
+
+来源：[Merge Two Sorted Lists](https://leetcode-cn.com/problems/merge-two-sorted-lists); 
+
+### 1.12.1 题目描述
+
+You are given the heads of two sorted linked lists `list1` and `list2`.
+
+Merge the two lists in a one **sorted** list. The list should be made by splicing together the nodes of the first two lists.
+
+Return the head of the merged linked list. 
+
+Example 1:
+
+![pic](https://assets.leetcode.com/uploads/2020/10/03/merge_ex1.jpg)
+
+```c++
+Input: list1 = [1,2,4], list2 = [1,3,4]
+Output: [1,1,2,3,4,4]
+```
+
+Example 2:
+
+```c++
+Input: list1 = [], list2 = []
+Output: []
+```
+
+Example 3:
+
+```c++
+Input: list1 = [], list2 = [0]
+Output: [0]
+```
+
+
+Constraints:
+
+- The number of nodes in both lists is in the range `[0, 50]`.
+- `-100 <= Node.val <= 100`
+- Both `list1` and `list2` are sorted in **non-decreasing** order.
+
+### 1.12.2 解法
+
+思路1：递归；
+
+- l1为空, return l2; 
+- l2为空, return l1; 
+- 都不为空，比较两者的头节点大小：
+  - l1 < l2, 则继续递归找 l1->next和l2 的合并有序链表, return l1;
+  - l2 < l1, 则继续递归找 l2->next和l1 的合并有序链表, return l2; 
+
+时间复杂度：O(m+n); 
+
+空间复杂度：O(m+n);
+
+参考代码：
+
+```c++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* mergeTwoLists(ListNode* list1, ListNode* list2) 
+    {
+        if(list1 == nullptr)
+        {
+            return list2;
+        }
+        else if(list2 == nullptr)
+        {
+            return list1;
+        }
+        else
+        {
+            // 比较第1个节点谁更小
+            if(list1->val < list2->val)
+            {
+                list1->next = mergeTwoLists(list1->next, list2);
+                return list1;
+            }
+            else
+            {
+                list2->next = mergeTwoLists(list2->next,list1);
+                return list2;
+            }
+        }
+    }
+};
+```
+
+思路2：迭代法；
+
+类似用归并的思想将两个有序数组进行合并。
+
+- 新建一个辅助节点；
+- 循环遍历两个链表，直到任一个链表为空这：
+  - 比较两链表，谁小谁链接到辅助节点上；并向后继续移动小的链表和辅助链表；
+- 把非空链表的剩余部分也接到辅助链表上；
+- 则辅助链表的next就是所求；（别忘了释放内存，以下代码仅为演示）
+
+时间复杂度：O(m+n); 
+
+空间复杂度：O(1); 
+
+参考代码：
+
+```c++
+ListNode* mergeTwoLists(ListNode* list1, ListNode* list2) 
+{
+    ListNode *dummy = new ListNode(-1); // 定义一个辅助的哑节点；别忘了释放内存
+    ListNode *current = dummy;
+    while(list1!=nullptr && list2!=nullptr)
+    {
+        if(list1->val < list2->val)
+        {
+            current->next = list1;
+            list1 = list1->next;
+        }
+        else
+        {
+            current->next = list2;
+            list2 = list2->next;
+        }
+        current = current->next;
+    }
+    // 把非空链表的剩余部分链接进来
+    current->next = (list1 != nullptr) ? list1 : list2;
+    return dummy->next;
+}
+```
+
+## 1.13 Generate Parentheses
+
+Tags: DFS; 递归;
+
+来源：[Generate Parentheses](https://leetcode-cn.com/problems/generate-parentheses); 
+
+### 1.13.1 题目描述
+
+Given `n` pairs of parentheses, write a function to generate all combinations of well-formed parentheses.
+
+ Example 1:
+
+```c++
+Input: n = 3
+Output: ["((()))","(()())","(())()","()(())","()()()"]
+```
+
+Example 2:
+
+```c++
+Input: n = 1
+Output: ["()"]
+```
+
+
+Constraints:
+
+- `1 <= n <= 8`
+
+### 1.13.2 解法
+
+思路1：DFS+递归；
+
+类似画一棵二叉树，左括号`(`是左子树，右括号`)`是右子树。共有`n`对括号，则左括号数量和右括号数量都是`n`。由于右括号必须有相应的左括号匹配，因此先画左括号，且要确保已经画出的左括号数量大于右括号数量时才画右括号。
+
+- 左括号、右括号数量同时达到`n`时，返回“从根节点到叶节点”的这条路径；
+- 否则，继续递归：
+  - 如果左括号数量小于`n`: 生成左子树，左括号数量+1；
+  - 如果右括号数量小于`n`，且小于当前左括号数量时：生成右子树，右括号数量+1；
+
+示例代码：
+
+```c++
+class Solution {
+public:
+    vector<string> generateParenthesis(int n) 
+    {
+        // dfs 思路
+        vector<string> result;
+        string buffer = "";  // 中间结果
+        DFS(result,n,buffer,0,0);
+        return result;
+    }
+
+    // buffer存储中间结果; left_count,right_count分别表示左、右括号的数量
+    void DFS(vector<string> &result, int &n, string buffer, int left_count, int right_count)
+    {
+        if(left_count==n && right_count==n)
+        {
+            result.push_back(buffer);
+            return;
+        }
+        else
+        {
+            if(left_count<n)
+            {
+                DFS(result, n, buffer+"(", left_count + 1, right_count);
+            }
+            if(right_count<n && right_count<left_count)
+            {
+                DFS(result, n, buffer+")", left_count, right_count + 1);
+            }
+        }
+    }
+};
+```
+
+思路2：动态规划；
+
+参考：[动态规划解法](https://leetcode-cn.com/problems/generate-parentheses/solution/zui-jian-dan-yi-dong-de-dong-tai-gui-hua-bu-lun-da/);  参考该思路以及下面的讨论（@lambda 的解释很能帮助理解）。
+
+整体思路是：
+
+1. 求`n`对括号生成的所有有效组合`f(n)`时，所有有效组合的第一个元素肯定是`"("`; 且必然会有一个右括号`")"`与之相对应；
+
+2. 此时`n`对括号就只**剩下`n-1`对括号需要安放**；
+
+3. 在这`n-1`对括号中，假定有`i`对括号（`0 <= j <= n-1`） 位于第1步的这对括号**内部**，那么剩下的`(n-1) - i`对括号就都位于第1步的这对括号**右侧**；则有：**`f(i) = "(" + f(j) + ")" + f(n-1-j)`**; 
+
+   [注：当`j=0`时，相当于所有`n-1`对括号都在第1步的括号对右侧；当`j=n-1`时，相当于所有`n-1`对括号都在第1步的括号对内部；]
+
+4. 遍历`f(i)`和`f(n-1-i)`中的所有元素（双层循环），并按第3步中的规则进行组合，便得到`f(n)`; 
+
+动态规划法：
+
+- `f(n) = dp[n]`;
+- `dp[i]`表示`i`对括号生成的所有有效组合；则`dp[n]`就是所求；
+- 初始值：`dp[0]={""}`; `dp[1]={"()"}`;
+- 转移方程：`dp[i] = "(" + dp[j] + ")" + dp[n-1-j]`;
+
+示例代码:
+
+```c++
+vector<string> generateParenthesis(int n)
+{
+    // 动态规划
+    if (n == 0)
+    {
+        return { "" };
+    }
+    if (n == 1)
+    {
+        return { "()" };
+    }
+
+    vector<vector<string>> dp(n + 1);
+
+    // 初始值
+    dp[0] = { "" };
+    dp[1] = { "()" };
+
+    for(int i=2; i<=n; ++i)			// 用以求dp[i]
+    {
+        for(int j=0; j<i; ++j)		// 遍历 0 <= j <= n-1
+    	{
+        	for(auto inner : dp[j])	// 遍历f(j)中所有元素
+        	{
+            	for(auto outer : dp[n-1-j])	// 遍历f(n-1-j)中所有元素
+            	{
+                	string tmp = "(" + inner + ")" + outer;
+                	dp[i].push_back(tmp);
+            	}
+        	}
+    	}
+    }
+    
+    return dp[n];
+}
+```
+
+
+
 # 2. Linked List
 
 其他题目。
