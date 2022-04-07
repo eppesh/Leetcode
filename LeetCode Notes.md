@@ -631,6 +631,8 @@ int main()
   std::sort(my_vector.begin(),my_vector.end(),std::greater<int>());	// 这里greater<int>后必须有小括号
   ```
 
+  Sean注：`std::priority_queue`优先队列中的`less`跟上述`less`效果正好相反，`priority_queue`中默认是`less`，但它是大顶堆，第一个元素是最大元素。（具体可通过维护大顶堆的过程加以理解）
+
 - 自定义比较函数
 
   参考：[std::sort-cplusplus.com](http://www.cplusplus.com/reference/algorithm/sort/?kw=sort); `std::sort`不是稳定排序，`std::stable_sort`是稳定排序；
@@ -2165,6 +2167,231 @@ vector<string> generateParenthesis(int n)
     return dp[n];
 }
 ```
+
+## 1.14 Merge K Sorted Lists
+
+Tags: 
+
+来源: [Merge K Sorted Lists](https://leetcode-cn.com/problems/merge-k-sorted-lists)；
+
+### 1.14.1 题目描述
+
+You are given an array of `k` linked-lists `lists`, each linked-list is sorted in ascending order.
+
+Merge all the linked-lists into one sorted linked-list and return it.
+
+ Example 1:
+
+```c++
+Input: lists = [[1,4,5],[1,3,4],[2,6]]
+Output: [1,1,2,3,4,4,5,6]
+Explanation: The linked-lists are:
+[
+  1->4->5,
+  1->3->4,
+  2->6
+]
+merging them into one sorted list:
+1->1->2->3->4->4->5->6
+```
+
+Example 2:
+
+```c++
+Input: lists = []
+Output: []
+```
+
+Example 3:
+
+```c++
+Input: lists = [[]]
+Output: []
+```
+
+
+Constraints:
+
+- `k == lists.length`
+- `0 <= k <= 104`
+- `0 <= lists[i].length <= 500`
+- `-10^4 <= lists[i][j] <= 10^4`
+- `lists[i]` is sorted in **ascending** order.
+- The sum of `lists[i].length` will not exceed `10^4`.
+
+### 1.14.2 解法
+
+#### 1.14.2.1 两两合并
+
+思路：利用”两个有序链表合并“的思路，遍历`lists`中链表，让它们两两合并，合并结果再与下一个链表进行合并，依次类推。
+
+时间复杂度：
+
+两个有序链表合并的时间复杂度是`O(m+n)`，m和n是两链表的长度；
+
+假设链表的最长长度是`n`，第一次合并是两个链表合并，时间代价是`2*n`，此时合并后的链表长度变为`2n`，进行第二次合并时，相当于3个链表合并，时间代价是`3n`，则第`k-1`次合并相当于k个链表合并的时间代价是`k*n`；由于第二次合并的时间代价`3n`并没有包含第一次合并的时间代价，因此总的时间代价是累加的：`2n+3n+...+kn`，故时间复杂度为：`O(k^2*n)`;
+
+空间复杂度：O(1); 
+
+示例程序：
+
+```c++
+ListNode* mergeTwoLists(ListNode* list1, ListN
+{
+    if(list1==nullptr)
+    {
+        return list2;
+    }
+    if(list2 == nullptr)
+    {
+        return list1;
+    }
+    ListNode *dummy = new ListNode(-1);
+    ListNode *head = dummy;
+    while(list1 != nullptr && list2 != nullptr
+    {
+        if(list1->val < list2->val)
+        {
+            dummy->next = list1;
+            list1 = list1->next;
+        }
+        else
+        {
+            dummy->next = list2;
+            list2 = list2->next;
+        }
+        dummy = dummy->next;
+    }
+    dummy->next = (list1==nullptr) ? list2 : l
+    return head->next;
+}
+ListNode* mergeKLists(vector<ListNode*>& lists
+{
+    // 思路1：每次进行两个有序链表的合并
+    if(lists.empty())
+    {
+        return nullptr;
+    }        
+    ListNode *result = nullptr;
+    for(int i=0; i<lists.size(); ++i)
+    {
+        result = mergeTwoLists(result,lists[i]
+    }
+    return result;
+}
+```
+
+#### 1.14.2.2 归并
+
+思路：在两两合并的基础上，使用**归并**思想进行优化。
+
+时间复杂度：O(kn * logk); (k表示有k组数据；kn表示总共有这么多节点)
+
+空间复杂度：O(logk);
+
+示例代码：
+
+```c++
+// 归并
+ListNode *merge(vector<ListNode*> &lists, int left, int right)
+{
+    if(left == right)
+    {
+        return lists[left];
+    }
+    if(left > right)
+    {
+        return nullptr;
+    }
+    int mid = (right+left)/2;
+    return mergeTwoLists(merge(lists,left,mid), merge(lists,mid+1,right));
+}
+ListNode* mergeKLists(vector<ListNode*>& lists) 
+{        
+    return merge(lists,0,lists.size()-1);
+}
+```
+
+#### 1.14.2.3 优先队列
+
+思路：跟两个有序链表合并相似。
+
+总共有`k`个链表，每次从这k个链表的第1个节点中找出最小值，最小值所在的那个链表后移一个节点，直到所有节点都比较完。
+
+从k个数据中找出最小值，不能单纯地逐个比较，思路就是找个**有序**容器，从小到大排序，则容器中第1个元素就是最小值；可以使用**堆**，对应容器`std::priority_queue`; 也可以合适`map`; 下面以`multimap`为例：
+
+- 新建一个节链表；
+- 先将`k`个链表的第1个节点放入`multimap`中；
+- 循环，直到`multimap`为空：
+  - 取容器第一个元素（最小值）；
+  - 将最小值节点放入新链表中；
+  - 删除容器的第一个元素；
+  - 如果上述最小元素的`next`存在，则将其`next`放入容器中；
+
+时间复杂度：O(kn*logk); k是链表个数，n是每个链表中元素最大个数（kn表示总共的元素个数）；map中元素个数不会超过过k，map的插入、删除时间复杂度是O(logk)，总共有kn个节点；
+
+空间复杂度：O(k); map中元素个数不会超过过k; 
+
+示例代码：
+
+```c++
+ListNode *mergeKLists(std::vector<ListNode *> &lists)
+{
+    if (lists.empty())
+    {
+        return nullptr;
+    }
+    ListNode *head = new ListNode(-1);
+    ListNode *tail = head;
+    std::multimap<int, ListNode *> tools;
+    for (int i = 0; i < lists.size(); ++i)
+    {
+        if (lists[i] != nullptr)
+        {
+            tools.insert(std::pair<int, ListNode *>(lists[i]->value_, lists[i]));
+        }
+    }
+    while (!tools.empty())
+    {
+        auto it = tools.begin();
+        ListNode *small = it->second;
+        tail->next_ = small;
+        tools.erase(it);
+        if (small->next_ != nullptr)
+        {
+            tools.insert(std::pair<int, ListNode *>(small->next_->value_, small->next_));
+        }
+        tail = small;
+    }
+    return head->next_;
+}
+```
+
+### 1.14.3 知识点
+
+- STL中的`map, set multimap, multiset`的时间复杂度：
+
+  > 这四种容器均采用红黑树实现；红黑树是平衡二叉树的一种。
+
+  **插入/删除/查找：`O(logN)`**; N是容器中的元素个数；
+
+- 优先队列：[`std::priority_queue`](http://www.cplusplus.com/reference/queue/priority_queue/?kw=priority_queue) ; 大根堆，第一个元素是最大元素；
+
+  - `top()`;
+  - `push()`;
+  - `pop()`;
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
