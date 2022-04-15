@@ -2381,11 +2381,101 @@ ListNode *mergeKLists(std::vector<ListNode *> &lists)
   - `push()`;
   - `pop()`;
 
+## 1.15 Next Permutation
+
+Tags: 
+
+来源：[LeetCode - Next Permutation](https://leetcode-cn.com/problems/next-permutation); 
+
+### 1.15.1 题目描述
+
+A permutation of an array of integers is an arrangement of its members into a sequence or linear order.
+
+- For example, for `arr = [1,2,3]`, the following are considered permutations of `arr: [1,2,3], [1,3,2], [3,1,2], [2,3,1]`.
+
+The **next permutation** of an array of integers is the next lexicographically greater permutation of its integer. More formally, if all the permutations of the array are sorted in one container according to their lexicographical order, then the **next permutation** of that array is the permutation that follows it in the sorted container. If such arrangement is not possible, the array must be rearranged as the lowest possible order (i.e., sorted in ascending order).
+
+For example, the next permutation of `arr = [1,2,3]` is `[1,3,2]`.
+Similarly, the next permutation of `arr = [2,3,1]` is `[3,1,2]`.
+While the next permutation of `arr = [3,2,1]` is` [1,2,3]` because `[3,2,1]` does not have a lexicographical larger rearrangement.
+Given an array of integers `nums`, find the next permutation of `nums`.
+
+The replacement must be **in place** and use only constant extra memory.
+
+Example 1:
+
+```c++
+Input: nums = [1,2,3]
+Output: [1,3,2]
+```
+
+Example 2:
+
+```c++
+Input: nums = [3,2,1]
+Output: [1,2,3]
+```
+
+Example 3:
+
+```c++
+Input: nums = [1,1,5]
+Output: [1,5,1]
+```
 
 
+Constraints:
 
+- 1 <= nums.length <= 100
+- 0 <= nums[i] <= 100
 
+### 1.15.2 解法
 
+思路：（[参考](https://leetcode-cn.com/problems/next-permutation/solution/xia-yi-ge-pai-lie-suan-fa-xiang-jie-si-lu-tui-dao-/) )
+
+要找下一个排列，需要从后面找一个**大的数**跟前面**小的数**进行**交换**，而且需要最接近原排列；这便要求：
+
+1. 尽可能选取靠右边的“大数”;
+2. 选取尽可能小的“大数”（如132，应该让2和1交换，而不是3和1交换）；
+3. 大数和小数交换后，大数后面的数字要升序；
+
+算法：
+
+- 从后向前找到第一对相邻的升序对(left,right)，那么[right,n]一定是降序的；
+- 在[right,n]中从后向前找到第一个大于[left]的数，便是要找的**大数**，将它跟[left]交换；
+- 将[right,n]进行降序；（如果数列一开始就是降序，则直接降序）
+
+示例程序：
+
+```c++
+void nextPermutation(vector<int>& nums) 
+{
+    if(nums.size()<=1)
+    {
+        return;
+    }
+    int right = nums.size()-1;
+    int left = right - 1;
+    // 从后往前找到第一对相邻的升序对
+    while(left>=0 && nums[left]>=nums[right])
+    {
+        right--;
+        left--;
+    }
+    for(int i=nums.size()-1; left>=0 && i>=right; --i)
+    {
+        // 倒着从闭区间[right,n]中找到第一个大于nums[left]的数，并交换
+        if(nums[i]>nums[left])
+        {
+            int tmp = nums[i];
+            nums[i] = nums[left];
+            nums[left] = tmp;
+            break;
+        }
+    }
+    std::sort(nums.begin()+left+1,nums.end());
+}
+```
 
 
 
