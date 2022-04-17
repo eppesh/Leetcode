@@ -2477,11 +2477,114 @@ void nextPermutation(vector<int>& nums)
 }
 ```
 
+### 1.15.3 知识点
+
+- STL中的[std::next_permutation](http://www.cplusplus.com/reference/algorithm/next_permutation/?kw=next_permutation) 就是此功能；
+
+## 1.16 Longest Valid Parentheses
+
+Tags: 动态规划；栈；
+
+来源：[Leetcode - Longest Valid Parentheses](https://leetcode-cn.com/problems/longest-valid-parentheses)
+
+### 1.16.1 题目描述
+
+Given a string containing just the characters` '(' `and` ')'`, find the length of the longest valid (well-formed) parentheses substring.
+
+ Example 1:
+
+```
+Input: s = "(()"
+Output: 2
+Explanation: The longest valid parentheses substring is "()".
+```
+
+Example 2:
+
+```
+Input: s = ")()())"
+Output: 4
+Explanation: The longest valid parentheses substring is "()()".
+```
+
+Example 3:
+
+```
+Input: s = ""
+Output: 0
+```
 
 
+Constraints:
 
+- `0 <= s.length <= 3 * 10^4`
+- `s[i]` is `'(', or ')'`
 
+### 1.16.3 解法
 
+#### 1.16.3.1 双“指针”
+
+思路：用两个变量`left, right`分别表示左括号和右括号的个数；先从左往右遍历字符串，并更新`left`和`right`的值；如果`right`等于`left`，那么`2*right`就是当前有效括号的长度，记录下最长的有效括号的长度；如果`right`大于`left`，说明已不再是有效括号，将`left, right`都置为0。
+
+考虑`((((()`的情况，`left`一直大于`right`会导致无法出现`left`等于`right`的情况，此时可以按上面的思路，再从右往左遍历一遍即可。对于`)()(`的情况，由于第一次遍历时`right=1, left=0`, 有`right>left`，会直接将`left, right`都置0。
+
+示例程序：
+
+```c++
+int longestValidParentheses(string s) 
+{
+    if(s.empty())
+    {
+        return 0;
+    }
+    int left = 0;
+    int right = 0;
+    int len = 0;
+    for(int i=0; i<s.size(); ++i)
+    {
+        if(s[i] == '(')
+        {
+            left++;
+        }
+        else
+        {
+            right++;
+        }
+        if(left == right)
+        {
+            len = max(len, 2*right);
+        }
+        if(right > left)
+        {
+            left = 0;
+            right = 0;
+        }            
+    }
+    left = 0;
+    right = 0;
+    for(int i=s.size()-1; i>=0; --i)
+    {
+        if(s[i] == '(')
+        {
+            left++;
+        }
+        else
+        {
+            right++;
+        }
+        if(left == right)
+        {
+            len = max(len, 2*right);
+        }
+        if(left > right)
+        {
+            left=0;
+            right=0;
+        }
+    }
+    return len;
+}
+```
 
 
 
