@@ -2520,13 +2520,17 @@ Constraints:
 - `0 <= s.length <= 3 * 10^4`
 - `s[i]` is `'(', or ')'`
 
-### 1.16.3 解法
+### 1.16.2 解法
 
-#### 1.16.3.1 双“指针”
+#### 1.16.2.1 双“指针”
 
 思路：用两个变量`left, right`分别表示左括号和右括号的个数；先从左往右遍历字符串，并更新`left`和`right`的值；如果`right`等于`left`，那么`2*right`就是当前有效括号的长度，记录下最长的有效括号的长度；如果`right`大于`left`，说明已不再是有效括号，将`left, right`都置为0。
 
 考虑`((((()`的情况，`left`一直大于`right`会导致无法出现`left`等于`right`的情况，此时可以按上面的思路，再从右往左遍历一遍即可。对于`)()(`的情况，由于第一次遍历时`right=1, left=0`, 有`right>left`，会直接将`left, right`都置0。
+
+时间复杂度：O(n);
+
+空间复杂度：O(1);
 
 示例程序：
 
@@ -2586,7 +2590,375 @@ int longestValidParentheses(string s)
 }
 ```
 
+## 1.17 Search in Rotated Sorted Array
 
+Tags: 二分查找；
+
+来源：[Leetcode - Search in Rotated Sorted Array](https://leetcode-cn.com/problems/search-in-rotated-sorted-array); 
+
+### 1.17.1 题目描述
+
+There is an integer array `nums`sorted in ascending order (with **distinct** values).
+
+Prior to being passed to your function, `nums` is **possibly rotated** at an unknown pivot index `k (1 <= k < nums.length) `such that the resulting array is `[nums[k], nums[k+1], ..., nums[n-1], nums[0], nums[1], ..., nums[k-1]] `(**0-indexed**). For example, `[0,1,2,4,5,6,7]` might be rotated at pivot index `3` and become `[4,5,6,7,0,1,2]`.
+
+Given the array `nums` after the possible rotation and an integer `target`, return the index of `target` if it is in `nums`, or `-1` if it is not in `nums`.
+
+You must write an algorithm with `O(log n)` runtime complexity.
+
+ Example 1:
+
+```
+Input: nums = [4,5,6,7,0,1,2], target = 0
+Output: 4
+```
+
+Example 2:
+
+```
+Input: nums = [4,5,6,7,0,1,2], target = 3
+Output: -1
+```
+
+Example 3:
+
+```
+Input: nums = [1], target = 0
+Output: -1
+```
+
+
+Constraints:
+
+- `1 <= nums.length <= 5000`
+- `-10^4 <= nums[i] <= 10^4`
+- All values of `nums` are **unique**.
+- `nums` is an ascending array that is possibly rotated.
+- `10^4 <= target <= 10^4`
+
+### 1.17.2 解法
+
+思路1：先找到`pivot`的位置，再对`pivot`前后两部分分别使用二分查找。虽然二分查找的时间复杂度是`O(logn)`，但遍历找`pivot`的时间复杂度是`O(n)`，不符合题目要求。
+
+思路2：要想使时间复杂度为`O(logn)`第一反应还得是二分查找。使用二分查找的前提是**有序数组**，但题目中的数组进行了旋转，不是有序的。如何解决呢？可以发现，虽然整个数组不是有序的，但是局部是有序的，比如例1`[4,5,6,7,0,1,2]`中的`[4,5,6,7]`就是有序的。如果选取一个分隔点，我们总能找到一个有序的部分，对于该有序子数组就可以进行二分查找。
+
+我们可以取`mid`作为分隔点，那么`[left, mid]`或者`[mid+1, right]`中必有一部分是有序的；
+
+- 如果`target`位于有序的部分，则使用二分查找；
+- 如果`target`位于无序的部分，那么在无序部分继续使用该策略（用`mid`分隔成有序和无序两部分）。
+
+示例代码：
+
+```c++
+int search(vector<int>& nums, int target) 
+{
+    if(nums.empty())
+    {
+        return -1;
+    }
+    if(nums.size() == 1)
+    {
+        return (nums[0] == target) ? 0 : -1;
+    }
+    int left = 0; 
+    int right = nums.size()-1;
+    while(left<=right)
+    {
+        int mid = (left + right) / 2;
+        if(nums[mid] == target)
+        {
+            return mid;
+        }
+        // 左边有序时
+        if(nums[left] <= nums[mid])
+        {
+            // 目标位于左侧时就在左侧找，否则在右侧找
+            if(target >= nums[left] && target <= nums[mid])
+            {
+                right = mid - 1;
+            }
+            else
+            {
+                left = mid + 1;
+            }
+        }
+        else
+        {
+            if(target >= nums[mid+1] && target <= nums[right])
+            {
+                left = mid + 1;
+            }
+            else
+            {
+                right = mid - 1;
+            }
+        }
+    }
+    return -1;
+}
+```
+
+
+
+## 1.24 Maximum Subarray
+
+Tags: 动态规划；分治；
+
+来源：[Leetcode - Maximum Subarray ](https://leetcode-cn.com/problems/maximum-subarray); 
+
+### 1.24.1 题目描述
+
+Given an integer array `nums`, find the contiguous subarray (containing at least one number) which has the largest sum and return its sum.
+
+A **subarray** is a **contiguous** part of an array.
+
+ Example 1:
+
+```
+Input: nums = [-2,1,-3,4,-1,2,1,-5,4]
+Output: 6
+Explanation: [4,-1,2,1] has the largest sum = 6.
+```
+
+Example 2:
+
+```
+Input: nums = [1]
+Output: 1
+```
+
+Example 3:
+
+```
+Input: nums = [5,4,-1,7,8]
+Output: 23
+```
+
+
+Constraints:
+
+- `1 <= nums.length <= 10^5`
+- `-10^4 <= nums[i] <= 10^4`
+
+**Follow up**: If you have figured out the `O(n)` solution, try coding another solution using the **divide and conquer** approach, which is more subtle.
+
+### 1.24.2 解法
+
+#### 1.24.2.1 动态规划
+
+参考：[经典动态规划问题](https://leetcode-cn.com/problems/maximum-subarray/solution/dong-tai-gui-hua-fen-zhi-fa-python-dai-ma-java-dai/); 
+
+题目要求连续子序列的最大和，但不用给出最大和对应的连续子序列，此类问题可使用“动态规划”解决。动态规划三步骤：定义状态、初始值、转移方程；一个个来。
+
+思路：
+
+- 如何确定状态定义？即`dp[i](或dp[i][j])`表示什么意思？
+
+  动态规划是将复杂问题向前一步步分解成简单的小问题，通过解决前面的小问题进而解决整个问题。
+
+  我们不知道**哪个连续子序列**的和最大，或者说不知道和最大的那个连续子序列会包含**哪个数**（但它肯定会包含一个数），那么我们可以遍历**所有数**，并求出包含该数的所有连续子序列中的最大和；这样每个数都对应一个含它在内的连续子序列的最大和，从中选取最大的那个就是所求的连续子序列的最大和。
+
+  例如，输入是：`[-2,1,-3,4,-1,2,1,-5,4]`; 我们可以求出以下子问题：
+
+  - 子问题1：包含数字`-2`的连续子序列的最大和是多少？
+  - 子问题2：包含数字`1`的连续子序列的最大和是多少？
+  - 子问题3：包含数字`-3`的连续子序列的最大和是多少？
+  - 子问题4：包含数字`4`的连续子序列的最大和是多少？
+  - 子问题5：包含数字`-1`的连续子序列的最大和是多少？
+  - 子问题6：包含数字`2`的连续子序列的最大和是多少？
+  - 子问题7：包含数字`1`的连续子序列的最大和是多少？
+  - 子问题8：包含数字`-5`的连续子序列的最大和是多少？
+  - 子问题9：包含数字`4`的连续子序列的最大和是多少？
+
+  此时，我们可以将`dp[i]`定义为”包含数字`i`的连续子序列的最大和 or 包含第`i`个数字的连续子序列的最大和“ 吗？但这些子问题之间的联系并不明显，不方便推导状态转移方程。主要是因为这些**子问题的描述还有不确定的地方（称为”有后效性“）**，例如”子问题3“中，包含数字`-3`的连续子序列可以是：`-2,1,-3,4`，`1,-3,4`或者`-3,4`等等，是不确定的。
+
+  那么，如何让”子问题3“变成一个**确定**的描述呢？我们可以限定数字在其连续子序列中出现的位置（如**尾部**），这样包含数字`-3`且数字`-3`出现在**尾部**的连续子序列只能是：`-2,1,-3`，`1,-3`或者`-3`这三种情况。此时，子问题的描述变为：
+
+  - 子问题1：以数字`-2`结尾的连续子序列的最大和是多少？
+  - 子问题2：以数字`1`结尾的连续子序列的最大和是多少？
+  - 子问题3：以数字`-3`结尾的连续子序列的最大和是多少？
+  - 子问题4：以数字`4`结尾的连续子序列的最大和是多少？
+  - 子问题5：以数字`-1`结尾的连续子序列的最大和是多少？
+  - 子问题6：以数字`2`结尾的连续子序列的最大和是多少？
+  - 子问题7：以数字`1`结尾的连续子序列的最大和是多少？
+  - 子问题8：以数字`-5`结尾的连续子序列的最大和是多少？
+  - 子问题9：以数字`4`结尾的连续子序列的最大和是多少？
+
+  这时，我们再来看子问题之间的联系。
+
+  对于子问题1，以数字`-2`结尾的连续子序列只有`-2`，故其结果就是`-2`；
+
+  对于子问题2，以数字`1`结尾的连续子序列有`-2,1`和`1`，其中`-2,1`就是在”子问题1“的后面加上了`1`得到的；其结果从(-2+1=-1)和1中取最大值1；
+
+  可以发现，求子问题`i`的结果时，如果子问题`i-1`的结果小于等于0，那么子问题`i`的结果就是`nums[i]`，因为`x<=0, a+x<=a`.
+
+  这样，子问题间的联系也找到了，就可以确定**状态定义**了：
+
+  **`dp[i]`表示：以第`i`个数字（或以下标为`i`的数字）结尾的连续子序列的最大和**；
+
+  注意：
+
+  - `dp[n-1]`只是表示”以第`n-1`个数字（即`4`）结尾的连续子序列的最大和“；
+
+  - 而题目要求的是`[-2,1,-3,4,-1,2,1,-5,4]`中连续子序列的最大和；
+
+    乍一看挺像，但其实两者并不一样，即`dp[n-1]`的值并不是本题目的答案；
+
+    因为前者有个约束，即先找出以`4`结尾的所有连续子序列，再找出这些子序列中和最大的那组子序列，求出其和；
+
+    而后者并没有此限制，后者的结果里最大和对应的连续子序列的结尾**并不一定得是**`4`; 
+
+    题目要求的是：1. 找出所有连续子序列；2. 计算找出的所有连续子序列的和；3. 找出最大的和。而我们遍历所有数字`i`，并求出的`dp[i]`相当于只完成了第1、2步（因为第1步中所有的连续子序列必定有个尾部数字，而我们的`dp[i]`就是以所有数字当成子序列的尾部来计算的），因此还要完成第3步，即从`dp[0], dp[1], dp[2], ... dp[n-1]`中求出最大值，即题目所求的结果是：
+
+    `max(dp[0], dp[1], dp[2], ... dp[n-1])`; 
+
+- 初始值：`dp[0]  = nums[0]`; 
+
+- 状态转移方程：
+
+  根据上面的推理可知：`dp[i] = dp[i-1] + nums[i]`; 由于`dp[i-1]`可能为负，而我们要求的是最大值，因此：
+
+  **`dp[i] = max(dp[i-1] + nums[i], nums[i])`;** 
+
+时间复杂度：`O(n)`; 
+
+空间复杂度：`O(n)`; 
+
+示例代码:
+
+```c++
+int maxSubArray(vector<int>& nums) 
+{
+    if(nums.size()==1)
+    {
+        return nums[0];
+    }
+    vector<int> dp(nums.size());
+    // dp[i]表示以下标i对应数字结尾的连续子串中最大连续子串的和
+    int max_sum =  nums[0];
+    dp[0] = nums[0];
+    for(int i=1; i<nums.size(); ++i)
+    {
+        if(dp[i-1] <= 0)
+        {
+            dp[i] = nums[i];
+        }
+        else
+        {
+            dp[i] = dp[i-1] + nums[i];
+        }
+        if(max_sum < dp[i])
+        {
+            max_sum = dp[i];
+        }
+    }
+    
+    return max_sum;
+}
+```
+
+上述代码可以优化空间复杂度，不使用一维数组，而是用一个`int`变量存放`dp[i-1]`的值，可以将空间复杂度降至O(1); 
+
+#### 1.24.2.2 分治法
+
+分治法（divide and conquer approach）是更灵活的一种方法。
+
+分治法的思路即分类讨论。
+
+根据题目要求，
+
+思路1：1. 找出所有连续子序列；2. 计算找出的所有连续子序列的和； 3. 找出最大的和。（这是上面动态规划的思路）
+
+思路2：找出具有最大和的**那组**连续子序列`Sub`，便同时得到了答案。
+
+现在对思路2进行分类讨论，如果我们把整个输入数组分成”左、中、右“三部分，那么`Sub`即有可能位于这三部分的任一个中：
+
+- 左部分：子区间`[left, mid]`; 
+- 中部分：以`[mid, mid+1]`为中心向两边扩展形成的子区间，即`nums[mid]`和`nums[mid+1]`一定会被包含在其中；
+- 右部分：子区间`[mid+1, right]`; 
+
+先分别求出这三部分中连续子序列的最大和`left_max, mid_max, right_max`, 则最大的那个`max(left_max, mid_max, right_max)`就是所求。
+
+求`left_max,right_max`时可以利用**递归**求解；求`mid`_max时的思路如下：
+
+因为是以`nums[mid], nums[mid+1]`为中心分别向两边扩展，但该区间大小未知，最大是向左扩展到`left`、向右扩展到`right`；可以将该区间分为两部分：`[x, ... ,mid]`和`[mid+1, ... , y]`；其中第1部分可理解为”求以`mid`结尾的连续子序列的最大和“，第2部分可理解为“求以`mid+1`开头的连续子序列的最大和”；但要注意对这两部分求解时，不能直接用动态规划的方式来解，而是应该分别以`mid`和`mid+1`作为遍历的起始点向外遍历。详见代码部分。
+
+![pic](https://pic.leetcode-cn.com/1621840913-dcvfVD-image.png)
+
+时间复杂度：`O(nlogn)`;
+
+空间复杂度：`O(logn)`; 
+
+示例代码：
+
+```c++
+// 从中间位置mid开始向外扩展形成的序列中连续子序列的最大和
+int MaxMidSum(std::vector<int> &nums, int left, int mid, int right)
+{
+    int tmp = 0;
+    // 具有最大和的连续子序列一定要包含nums[mid]和nums[mid+1],即[x,...,mid,mid+1,...y]
+    // 将其分成两部分[x,...,mid]和[mid+1,...y],这两部分的连续子序列的最大和相加就是所求
+
+    // 先求[x,...,mid],即求以nums[mid]结尾的连续子序列的最大和,要从nums[mid]开始向左遍历
+    int left_sum = INT_MIN;
+    for (int i = mid; i >= left; --i)
+    {
+        tmp += nums[i];
+        if (tmp > left_sum)
+        {
+            left_sum = tmp;
+        }
+    }
+
+    // 再求[mid+1,...y],即求以nums[mid+1]开头的连续子序列的最大和
+    int right_sum = INT_MIN;
+    tmp = 0;
+    for (int i = mid + 1; i <= right; ++i)
+    {
+        tmp += nums[i];
+        if (tmp > right_sum)
+        {
+            right_sum = tmp;
+        }
+    }
+    return left_sum + right_sum;
+}
+
+// 求left和right之间的序列中连续子序列的最大和
+int MaxSubArraySum(std::vector<int> &nums, int left, int right)
+{
+    if (left == right)
+    {
+        return nums[left];
+    }
+    int mid = (left + right) / 2;
+    int left_max = MaxSubArraySum(nums, left, mid);
+    int mid_max = MaxMidSum(nums, left, mid, right);
+    int right_max = MaxSubArraySum(nums, mid + 1, right);
+    
+    return std::max(left_max, std::max(mid_max, right_max));
+}
+
+int MaxSubArray(std::vector<int> &nums)
+{
+    if (nums.empty())
+    {
+        return 0;
+    }
+    int size = nums.size();
+    return MaxSubArraySum(nums, 0, size - 1);
+}
+```
+
+### 1.24.3 知识点
+
+- 无后效性
+
+  > 李煜东著《算法竞赛进阶指南》，摘录如下：
+  >
+  > 为了保证计算子问题能够按照顺序、不重复地进行，动态规划要求已经求解的子问题不受后续阶段的影响。这个条件也被叫做「无后效性」。换言之，动态规划对状态空间的遍历构成一张有向无环图，遍历就是该有向无环图的一个拓扑序。有向无环图中的节点对应问题中的「状态」，图中的边则对应状态之间的「转移」，转移的选取就是动态规划中的「决策」。
+
+  
 
 # 2. Linked List
 
