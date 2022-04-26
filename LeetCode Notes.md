@@ -2698,7 +2698,297 @@ int search(vector<int>& nums, int target)
 }
 ```
 
+## 1.18 Find First and Last Position of Element in Sorted Array
 
+Tags: 二分查找；
+
+来源：[Leetcode - Find First and Last Position of Element in Sorted Array](https://leetcode-cn.com/problems/find-first-and-last-position-of-element-in-sorted-array/); 
+
+### 1.18.1 题目描述
+
+Given an array of integers `nums` sorted in non-decreasing order, find the starting and ending position of a given `target` value.
+
+If `target` is not found in the array, return `[-1, -1]`.
+
+You must write an algorithm with `O(log n)` runtime complexity.
+
+ Example 1:
+
+```
+Input: nums = [5,7,7,8,8,10], target = 8
+Output: [3,4]
+```
+
+Example 2:
+
+```
+Input: nums = [5,7,7,8,8,10], target = 6
+Output: [-1,-1]
+```
+
+Example 3:
+
+```
+Input: nums = [], target = 0
+Output: [-1,-1]
+```
+
+
+Constraints:
+
+- `0 <= nums.length <= 10^5`
+
+- `-10^9 <= nums[i] <= 10^9`
+
+- `nums` is a non-decreasing array.
+
+- `-10^9 <= target <= 10^9`
+
+### 1.18.2 解法
+
+思路：二分查找；
+
+不同于一般的二分查找，找到就结束，该题目还要求找到第1个和最后1个`target`的索引。利用二分查找寻找两次，第一次找左边界，第二次找右边界。在找到目标值时不直接返回，而是向一侧收紧并继续寻找：如果找左边界，则向左收紧（`right=mid-1`）；如果找右边界，则向右收紧（`left=mid+1`）。考虑整个数组都相同的极端情况。由于全程都是二分查找，因此时间复杂度是`O(logn)`；
+
+时间复杂度：`O(logn)`; 
+
+空间复杂度：`O(1)`；
+
+示例代码：
+
+```c++
+const int kLeft = 0;
+const int kRight = 1;
+int BinarySearch(std::vector<int> &nums, int left, int right, int target, int flag)
+{
+    int index = -1;
+    while (left <= right)
+    {
+        int mid = (left + right) / 2;
+        if (nums[mid] == target)
+        {
+            index = mid;
+            if (flag == kLeft)	// 找左边界
+            {
+                right = mid - 1;
+            }
+            else				// 找右边界
+            {
+                left = mid + 1;
+            }
+        }
+        else if (nums[mid] > target)
+        {
+            right = mid - 1;
+        }
+        else
+        {
+            left = mid + 1;
+        }
+    }
+    return index;
+}
+std::vector<int> searchRange(std::vector<int> &nums, int target)
+{
+    if (nums.empty())
+    {
+        return { -1,-1 };
+    }
+
+    int left = 0;
+    int right = nums.size() - 1;
+    int left_index = BinarySearch(nums, left, right, target, kLeft);
+    int right_index = BinarySearch(nums, left, right, target, kRight);
+    return { left_index, right_index };
+}
+```
+
+## 1.19 Combination Sum
+
+Tags: DFS; 回溯；
+
+来源：[Leetcode - Combination Sum](https://leetcode-cn.com/problems/combination-sum/); 
+
+### 1.19.1 题目描述
+
+Given an array of **distinct** integers `candidates` and a target integer `target`, return a list of all **unique combinations** of `candidates` where the chosen numbers sum to `target`. You may return the combinations in **any order.**
+
+The **same** number may be chosen from `candidates` an **unlimited number of times**. Two combinations are unique if the frequency of at least one of the chosen numbers is different.
+
+It is **guaranteed** that the number of unique combinations that sum up to `target` is less than `150` combinations for the given input.
+
+ Example 1:
+
+```
+Input: candidates = [2,3,6,7], target = 7
+Output: [[2,2,3],[7]]
+Explanation:
+2 and 3 are candidates, and 2 + 2 + 3 = 7. Note that 2 can be used multiple times.
+7 is a candidate, and 7 = 7.
+These are the only two combinations.
+```
+
+Example 2:
+
+```
+Input: candidates = [2,3,5], target = 8
+Output: [[2,2,2,2],[2,3,3],[3,5]]
+```
+
+Example 3:
+
+Input: candidates = [2], target = 1
+Output: []
+
+
+Constraints:
+
+- `1 <= candidates.length <= 30`
+- `1 <= candidates[i] <= 200`
+- All elements of `candidates` are **distinct**.
+- `1 <= target <= 500`
+
+### 1.19.2 解法
+
+画图来辅助思考：
+
+- 以`target`为根节点画树；
+- 以`candidate[i]`为边，以`int left = target - candidate[i]`为子节点，画出根的子节点；
+- 继续以上一步的每个子节点作为`target`，并画出其下一层的子节点，当`left<=0`时停止；
+- 所有从根节点到节点`0`的路径就是一个结果。
+
+画出这样一棵树后，方便我们以`DFS`的思路来思考。以`[2,3,6,7] target=7`为例，参考下图：
+
+![pic](https://pic.leetcode-cn.com/1598091943-hZjibJ-file_1598091940241)
+
+整个过程如下：
+
+- 遍历`candidate[i]`（即第一层的边），如`2`；
+  - `left = target - candidate[i] = 7-2=5`; 
+  - 以`left`作为新的`target`开始下一层的查找，并把结果跟前面的边（`-2`）结合起来；
+
+可以发现，每个节点都是`target`，当`target=0`时说明到达递归的终点；
+
+**重复性问题**：如`[2,2,3]`和`[3,2,2]`都是求出的解，但该题目中这两个解视为一个，因此要去重。在遍历过某个`candidate[i]`后，下一次递归不再遍历这个元素；如上图中节点`5`的第2个子节点，由于此时已经在遍历`candidate[1]=3`,因此它的下一层遍历也从`candidate[i]=3`开始，而不是从`candidate[0]=2`开始，因此这条路径不会再出现`[2,3,2]`这样的路径。
+
+优化点：考虑到一个大于`target`的数是无法分解的，也就无须参与下一层的查找，因此可以**先将`candidate`从小到大排序**，遍历时遇到大于`target`的数可停止遍历，以此来减少遍历次数。有两种实现思路：
+
+1. 遍历`candidate[i]`时，如果`candidate[i] > target`，则跳出循环，停止遍历；（推荐）
+
+   ```c++
+   void combinationSumRecurse(std::vector<std::vector<int>> &output, std::vector<int> &input, int target, int begin, std::vector<int> &buffer)
+   {    
+       if (target == 0)
+       {
+           output.push_back(buffer);
+           return;
+       }
+       for (int i = begin; i < input.size(); ++i)
+       {
+           int left = target - input[i];
+           if(left < 0)
+           {
+               break;
+           }
+           buffer.push_back(input[i]);
+           combinationSumRecurse(output, input, left, i, buffer);
+           buffer.pop_back();
+       }
+   }
+   ```
+
+2. 找出`candidate[i]`中第一个大于等于`target`的数的下标，该下标就是遍历时的终止条件。
+
+   ```c++
+   // 前提是candidates已经按从小到大排序过；
+   // 利用二分法查找第一个大于等于target的数的下标
+   // 如果数组中的数都比target小，则返回最后一个数的下标（right）
+   int BinarySearch(std::vector<int> &candidates, int left, int right, int target)
+   {
+       int result = -1;
+       while (left <= right)
+       {
+           int mid = (left + right) / 2;
+           if (candidates[mid] >= target)
+           {
+               right = mid - 1;
+               result = mid;
+           }
+           else
+           {
+               left = mid + 1;
+           }
+       }
+       return (result == -1) ? right : result;
+   }
+   
+   void combinationSumRecurse(std::vector<std::vector<int>> &output, std::vector<int> &input, int target, int begin, std::vector<int> &buffer)
+   {    
+       if (target == 0)
+       {
+           output.push_back(buffer);
+           return;
+       }
+       // 找到第1个大于等于target的数;它之后的数就可以不考虑了
+       int end = BinarySearch(input, begin, input.size() - 1, target);
+           
+       // 如果input[end]大于target,则end=end-1
+       if (input[end] > target)
+       {
+           end -= 1;
+       }
+   
+       for (int i = begin; i <= end; ++i)
+       {
+           int left = target - input[i];
+           buffer.push_back(input[i]);
+           combinationSumRecurse(output, input, left, i, buffer);
+           buffer.pop_back();
+       }
+   }
+   ```
+
+示例代码：
+
+```c++
+void combinationSumRecurse(std::vector<std::vector<int>> &output, std::vector<int> &input, int target, int begin, std::vector<int> &buffer)
+{
+    if (0 == target)
+    {
+        output.push_back(buffer);
+        return;
+    }
+
+    for (int i = begin; i < input.size(); ++i)
+    {
+        int left = target - input[i];
+        if (left < 0)
+        {
+            break;
+        }
+        buffer.push_back(input[i]);
+        combinationSumRecurse(output, input, left, i, buffer);
+        buffer.pop_back();
+    }
+}
+
+vector<vector<int>> combinationSum(vector<int> &candidates, int target)
+{
+    std::vector<std::vector<int>> result;
+    std::vector<int> buffer;    // 中间变量
+    std::sort(candidates.begin(), candidates.end());
+    combinationSumRecurse(result, candidates, target, 0, buffer);
+    return result;
+}
+```
+
+### 1.19.3 知识点
+
+- 回溯算法
+
+  可理解为按**深度优先搜索（DFS）的顺序，穷举所有可能性**的一种算法。相比暴力穷举法，回溯算法可以随时判断当前状态是否符合条件，一旦不符合条件就退回到上一个状态，而省去了继续往下探索的时间。
+
+  **剪枝**：是一种优化策略，即判断当前分支是否符合问题的条件，若不符合就不再遍历该分支的所有路径；
 
 ## 1.24 Maximum Subarray
 
