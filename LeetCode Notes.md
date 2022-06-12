@@ -1263,8 +1263,6 @@ Constraints:
 
 - 0 <= height[i] <= 10^4
 
-
-
 ### 1.7.2 解法
 
 思路：头尾双指针法；
@@ -2989,6 +2987,383 @@ vector<vector<int>> combinationSum(vector<int> &candidates, int target)
   可理解为按**深度优先搜索（DFS）的顺序，穷举所有可能性**的一种算法。相比暴力穷举法，回溯算法可以随时判断当前状态是否符合条件，一旦不符合条件就退回到上一个状态，而省去了继续往下探索的时间。
 
   **剪枝**：是一种优化策略，即判断当前分支是否符合问题的条件，若不符合就不再遍历该分支的所有路径；
+
+## 1.20  Trapping Rain Water*
+
+Tags:
+
+来源：
+
+### 1.20.1 题目描述
+
+### 1.20.2 解法
+
+## 1.21 Permutations
+
+Tags: 回溯法
+
+来源：[Leetcode - Permutations](https://leetcode.cn/problems/permutations/)
+
+### 1.21.1 题目描述
+
+Given an array `nums` of distinct integers, return all the possible permutations. You can return the answer in **any order.**
+
+Example 1:
+
+```
+Input: nums = [1,2,3]
+Output: [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+```
+
+Example 2:
+
+```
+Input: nums = [0,1]
+Output: [[0,1],[1,0]]
+```
+
+Example 3:
+
+```
+Input: nums = [1]
+Output: [[1]]
+```
+
+
+Constraints:
+
+- `1 <= nums.length <= 6`
+- `-10 <= nums[i] <= 10`
+- All the integers of `nums` are **unique**.
+
+### 1.21.2 解法
+
+深度优先搜索的思路，遍历每个数字，并递归找剩余数字的全排列。为了使已经遍历过的数字不再重复出现，一种方法是利用标志数组，另一种方法是原地区分（即把输入数组分成前后两部分，前面是排列过的数字，后面是未排列过的数字；以下标表示时，对于`(0,...,begin, begin+1, length-1)`，以`begin`为界，`[0, begin]`是已经排列过的，`[begin+1,length-1]`是未排列过的；每排列完一个数字就将其划分到前面部分；具体看代码）。
+
+方法一：使用标识数组；
+
+```c++
+void DFS(vector<vector<int>> &result, vector<int>& nums, vector<int> &buffer, vector<bool> &flag
+{
+    if(buffer.size() == nums.size())
+    {
+        result.emplace_back(buffer);
+        return;
+    }
+    for(int i=0; i<nums.size(); ++i)
+    {
+        if(!flag[i])
+        {
+            flag[i] = true;
+            buffer.emplace_back(nums[i]);
+            DFS(result, nums, buffer, flag);
+            buffer.pop_back();
+            flag[i] = false;    // pop之后也要将该数字重新置为“未排列”状态
+        }
+    }
+}
+vector<vector<int>> permute(vector<int>& nums) 
+{
+    vector<vector<int>> result;
+    int begin = 0;
+    vector<int> buffer; // 存放临时结果，即每一个排列结果
+    vector<bool> flag(nums.size(), false); // 用以标识哪个数字已经排列过
+    DFS(result, nums, buffer, flag);
+    return result;
+}
+```
+
+方法二：原地区分；
+
+```c++
+void DFS(vector<vector<int>> &result, vector<int> &nums, int begin)
+{
+    if(begin == nums.size())
+    {
+        result.emplace_back(nums);
+        return;
+    }
+    for(int i=begin; i<nums.size(); ++i)
+    {
+        std::swap(nums[i], nums[begin]);
+        DFS(result, nums, begin+1);
+        std::swap(nums[begin], nums[i]);
+    }
+}
+vector<vector<int>> permute(vector<int>& nums) 
+{
+    vector<vector<int>> result;
+    int begin = 0;
+    DFS(result, nums, begin);
+    return result;
+}
+```
+
+### 1.21.3 知识点
+
+- 回溯法(`Backtracking`)与`DFS`的区别：
+
+  - [观点1](https://leetcode.com/discuss/general-discussion/136503/what-is-difference-between-backtracking-and-depth-first-search#:~:text=Backtracking%20can%20stop%20(finish)%20searching,reach%20to%20its%20leaf%20nodes.)：I think the difference is pruning of tree. Backtracking can stop (finish) searching certain branch by checking the given conditions (if the condition is not met). However, in DFS, you have to reach to the leaf node of the branch to figure out if the condition is met or not, so you cannot stop searching certain branch until you reach to its leaf nodes.
+
+    > Sean注：我感觉上面这种观点挺不错的；**DFS：必须要搜索到叶节点；回溯：当条件满足时，就可以提前结束搜索，不用一定要到达叶节点。**
+
+  - [观点2](https://www.baeldung.com/cs/backtracking-vs-dfs): 
+
+    ![pic](https://www.baeldung.com/wp-content/ql-cache/quicklatex.com-532130db83681f87ee13957ea6714697_l3.svg)
+
+  - 小结：
+    - Backtracking: 适用范围更宽泛（可用于各种数据结构）；常用于处理约束性问题；满足某种条件时就可以停止搜索；
+    - DFS: 主要适用于图；只有到达叶节点后才返回；
+
+- 回溯法常用思路：
+
+  先在草稿纸上把题目中的`implicit tree`结构画出来，再套用下面的思路；
+
+  ```c++
+  // 伪代码
+  void BackTracking(arguments ...)
+  {
+      if(遇到边界)
+      {
+          输出临时结果
+          return;
+      }
+      for(int i=0; i<n; ++i)	// 遍历所有节点
+      {
+          修改临时结果
+          if(满足某个条件)		// 过滤掉不需要参与下一步递归的节点;剪枝(Pruning)
+          {
+              BackTracking(arguments);	// 递归求解
+          }
+          恢复临时结果			// 即撤销递归前的修改；即向前回溯；这里是重点：递归之后要退回到之前的一个状态
+      }
+  }
+  ```
+
+## 1.22 Rotate Image
+
+Tags: 顺时针；对角线翻转；
+
+来源：[Leetcode-Rotate Image](https://leetcode.cn/problems/rotate-image/)
+
+### 1.22.1 题目描述
+
+You are given an `n x n` 2D `matrix` representing an image, rotate the image by **90** degrees (clockwise).
+
+You have to rotate the image in-place, which means you have to modify the input 2D matrix directly. **DO NOT** allocate another 2D matrix and do the rotation.
+
+ Example 1:
+
+![pic](https://assets.leetcode.com/uploads/2020/08/28/mat1.jpg)
+
+```c++
+Input: matrix = [[1,2,3],[4,5,6],[7,8,9]]
+Output: [[7,4,1],[8,5,2],[9,6,3]]
+```
+
+Example 2:
+
+![pic](https://assets.leetcode.com/uploads/2020/08/28/mat2.jpg)
+
+```c++
+Input: matrix = [[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]
+Output: [[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]
+```
+
+
+Constraints:
+
+- `n == matrix.length == matrix[i].length`
+- `1 <= n <= 20`
+- `-1000 <= matrix[i][j] <= 1000`
+
+### 1.24.2 解法
+
+思路1：借助辅助数组；
+
+先找规律：
+
+- 第`x`行第`y`列翻转后变为第`y`行第倒数第`x`列; 由于下标是从0开始的，因此有：`matrix_new[i][j] = matrix[j][n-1-i]`;
+
+示例代码：
+
+时间复杂度：O(N^2); 
+
+空间复杂度：O(N^2); 
+
+```c++
+class Solution 
+{
+public:
+    void rotate(vector<vector<int>>& matrix) 
+    {
+        int rows = matrix.size();
+        int cols = matrix[0].size();
+        auto matrix_copy = matrix;
+        for(int i=0; i< rows; ++i)
+        {
+            for(int j=0; j<cols; ++j)
+            {
+                matrix[j][rows-1-i] = matrix_copy[i][j];
+            }
+        }
+    }
+};
+```
+
+思路2：翻转代替旋转；
+
+可以发现：顺时针旋转90度 = 水平翻转 + 主对角线翻转；
+
+水平翻转时：`matrix[row][col] = matrix[n-1-row][col]`; 
+
+主对角线翻转时：`matrix[row][col] = matrix[col][row]`; 
+
+则两次翻转后：`matrix[row][col] = matrix[col][n-1-row]`; 跟思路1的等式是一样的；
+
+示例代码：
+
+时间复杂度：O(N^2); 
+
+空间复杂度：O(1)
+
+```c++
+class Solution 
+{
+public:
+    void rotate(vector<vector<int>>& matrix) 
+    {
+        // 顺时针翻转 = 水平翻转 + 主对角线翻转
+        int rows = matrix.size();
+        int cols = matrix[0].size();
+        // 水平翻转(第1行变成了倒数第1行...)
+        for(int row = 0; row < rows/2; ++row)
+        {
+            for(int col = 0; col < cols; ++col)
+            {
+                std::swap(matrix[row][col],matrix[rows-row-1][col]);
+            }
+        }
+        // 主对角线翻转
+        for(int row = 0; row < rows; ++row)
+        {
+            for(int col = 0; col < row; ++col)
+            {
+                std::swap(matrix[row][col],matrix[col][row]);
+            }
+        }
+    }
+};
+```
+
+## 1.23 Group Anagrams 
+
+Tags:
+
+来源：[Leetcode - Group Anagrams](https://leetcode.cn/problems/group-anagrams/); 
+
+### 1.23.1 题目描述
+
+Given an array of strings `strs`, group **the anagrams** together. You can return the answer in **any order**.
+
+An **Anagram** is a word or phrase formed by rearranging the letters of a different word or phrase, typically using all the original letters exactly once.
+
+ Example 1:
+
+```
+Input: strs = ["eat","tea","tan","ate","nat","bat"]
+Output: [["bat"],["nat","tan"],["ate","eat","tea"]]
+```
+
+Example 2:
+
+```
+Input: strs = [""]
+Output: [[""]]
+```
+
+Example 3:
+
+```
+Input: strs = ["a"]
+Output: [["a"]]
+```
+
+
+Constraints:
+
+- `1 <= strs.length <= 10^4`
+- `0 <= strs[i].length <= 100`
+- `strs[i]` consists of lowercase English letters.
+
+### 1.23.2 解法
+
+思路1：把字符串排序后当做哈希表的`key`；
+
+示例代码：
+
+时间复杂度：O(knlogn); 有`k`个字符串，每个字符串的长度为`n`; `std::sort`排序的时间复杂度为`O(nlog2(n))`; 
+
+空间复杂度：O(kn); 
+
+```c++
+vector<vector<string>> groupAnagrams(vector<string>& strs) 
+{
+    vector<vector<string>> result;
+    if(strs.empty())
+    {
+        return result;
+    }
+    int len = strs.size();
+    std::unordered_map<std::string,std::vector<std::string>> hashmap;
+    for(int i=0; i<len; ++i)
+    {
+        std::string tmp = strs[i];
+        std::sort(tmp.begin(), tmp.end());             
+        hashmap[tmp].emplace_back(strs[i]);
+    }
+    for(auto it = hashmap.begin(); it!=hashmap.end(); ++it)
+    {
+        result.emplace_back(it->second);
+    }
+    return result;
+}
+```
+
+思路2：计数；把每个字母出现的频次转换成`std::string`作为哈希表的`key`; 
+
+示例代码：
+
+```c++
+vector<vector<string>> groupAnagrams(vector<string>& strs) 
+{
+    vector<vector<string>> result;       
+    std::unordered_map<std::string,std::vector<std::string>> hashmap;
+    for(auto &str : strs)
+    {
+        std::string tmp(26,'0');
+        for(auto &it : str)
+        {
+            // 遍历每个字符串中的字母，统计其频次
+            tmp[it-'a']++;
+        }                         
+        hashmap[tmp].emplace_back(str);
+    }
+    for(auto it = hashmap.begin(); it!=hashmap.end(); ++it)
+    {
+        result.emplace_back(it->second);
+    }
+    return result;
+}
+```
+
+官方的方法二有些难理解，可以先看上述解法。归根到底都是借助`std::unordered_map`，但具体用什么作为它的`key`呢？如果是`std::string`这种类型，STL中已经有了默认的哈希函数了；如果是自定义的类型当作`key`，那么还需要自己写一个哈希函数(`hash_function`)，并在传给map时进行指定。详见官方方法2及其评论。
+
+### 1.23.3 知识点
+
+- 字符串排序
+
+  例如，把字符串`std::string demo = "world"`按字典序排序：`std::sort(demo.begin(), demo.end())`，排序后`demo`变为`dlorw`; 
 
 ## 1.24 Maximum Subarray
 
