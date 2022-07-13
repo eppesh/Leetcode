@@ -3628,7 +3628,78 @@ int MaxSubArray(std::vector<int> &nums)
 
 ## 1.26 Merge Intervals*
 
+## 1.37 Binary Tree Inorder Traversal
 
+Tags: 二叉树中序遍历；
+
+来源：[Binary Tree Inorder Traversal](https://leetcode.cn/problems/binary-tree-inorder-traversal/);
+
+### 知识点
+
+```c++
+struct TreeNode {
+    int val;
+    TreeNode *left;
+    TreeNode *right;
+    TreeNode() : val(0), left(nullptr), right(nullptr) {}
+    TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+    TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+};
+```
+
+- 中序遍历-递归版
+
+  ```c++
+  void InOrder(TreeNode *root, std::vector<int> &res)
+  {
+      if(!root)
+      {
+          return;
+      }
+      InOrder(root->left, res);
+      res.emplace_back(root->value);
+      InOrder(root->right, res);
+  }
+  
+  std::vector<int> inorderTraversal(TreeNode *root)
+  {
+      std::vector<int> res;
+      InOrder(root, res);
+      return res;
+  }
+  ```
+
+  时间复杂度：`O(n)`, n是二叉树节点的个数。二叉树的遍历中每个节点会被访问一次（有且只会被访问一次）；
+
+  空间复杂度：`O(n)`；空间复杂度取决于栈的深度，而栈深度在二叉树为一条链时会达到`O(n)`；
+
+- 中序遍历-迭代版
+
+  ```c++
+  std::vector<int> inorderTraversal(TreeNode *root)
+  {
+      std::vector<int> res;
+      std::stack<TreeNode *> tools;	// 手动借助栈（对比递归时会自动使用栈）
+      
+      while(root != nullptr || !tools.empty())
+      {
+          while(root != nullptr)
+          {
+              tools.push(root);
+              root = root->left;		// 将root及左节点依次入栈,出栈时即为“左节点-root"
+          }
+          
+          root = tools.top();
+          tools.pop();
+          res.emplace_back(root->val);	// 将栈顶元素弹出并存入结果中
+          
+          root = root->right;
+      }
+      return res;
+  }
+  ```
+
+  
 
 # 2. Linked List
 
