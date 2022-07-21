@@ -3699,7 +3699,9 @@ struct TreeNode {
   }
   ```
 
-  
+  时间复杂度：`O(n)`, n是二叉树节点的个数。二叉树的遍历中每个节点会被访问一次（有且只会被访问一次）；
+
+  空间复杂度：`O(n)`；空间复杂度取决于栈的深度，而栈深度在二叉树为一条链时会达到`O(n)`；
 
 # 2. Linked List
 
@@ -3717,7 +3719,7 @@ Given the `head` of a linked list (which is the representation of a matrix), ret
 
 给定一个单链表a，请返回单链表b（如下图所示）。
 
-![pic](https://github.com/eppesh/Pictures/blob/main/Transpose%20Linked%20List.png)
+![](https://raw.githubusercontent.com/eppesh/Pictures/main/Transpose_Linked_List.png?token=AFP4PTKRIUH2Y6FWUI5ZJGTC25RGS)
 
 ```c++
 input: 1->2->3->4->5->6->7->8->9
