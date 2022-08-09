@@ -1760,13 +1760,13 @@ ListNode* removeNthFromEnd(ListNode* head, int n)
 
   ```c++
   ListNode *dummy = new ListNode(0,head);
-  if(dummy == nullptr)
+  if(dummy == nullptr)	// 不需要判断,若未分配内存成功程序早已崩溃,可进行异常捕获
   {
   	return;
   }
   // do something
   // 记得释放内存
-  if(dummy != nullptr)
+  if(dummy != nullptr)	// 不需要判断, delete可以删除空指针
   {
   	delete dummy;
   	dummy = nullptr;
